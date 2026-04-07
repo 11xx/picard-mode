@@ -443,6 +443,7 @@ See also: `picard-tab-width', `picard-indent-line'."
                 nil   ; CASE-FOLD: nil means case-sensitive matching.
                 nil   ; SYNTAX-ALIST: no additional syntax modifications.
                 nil)) ; SYNTAX-BEGIN: nil = use font-lock defaults.
+  (setq-local font-lock-string-face nil) ; "everything is a string", so disable quoted string syntax
 
   ;; ── Syntax propertize ─────────────────────────────────────────────────
   ;; Assign the $noop-detection function.  Emacs calls this before each
