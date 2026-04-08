@@ -115,6 +115,12 @@ width — the actual indentation token is always a literal TAB character."
     ;; syntax tables, but colon needs explicit promotion.
     (modify-syntax-entry ?: "_" table)
 
+    ;; Double quote — punctuation, not a string delimiter.
+    ;; Picard does not use prog-style string syntax, so treating " as
+    ;; punctuation prevents Emacs from entering string state and incorrectly
+    ;; spanning text between quotes.
+    (modify-syntax-entry ?\" "." table)
+
     table)
   "Syntax table for `picard-mode'.
 
@@ -184,7 +190,7 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
     ;; so that the paren retains its structural syntax-class coloring.
     (,(rx "$" (not (any space)) (zero-or-more (any alnum "_")))
      (0 (when (not (string-equal (match-string 0) "$noop"))
-          'font-lock-function-name-face)))
+          'font-lock-keyword-face)))
 
     ;; ── Variable references (%varname%) ─────────────────────────────────
     ;; Per the grammar: identifier  ::= [a-zA-Z0-9_]
@@ -200,11 +206,9 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
     ("," (0 picard--font-lock-delimiter-face))
 
     ;; ── $noop opening sigil ─────────────────────────────────────────────
-    ;; Highlight "$noop" itself with the function-name face even though the
-    ;; interior is a comment.  This makes $noop visually distinct from plain
-    ;; comment text, which aids readability.
+    ;; Opening of comment function.
     (,(rx "$noop")
-     (0 'font-lock-function-name-face prepend)))
+     (0 'font-lock-comment-face prepend)))
   "Font-lock keyword specification for `picard-mode'.
 
 Entries are ordered so that escape sequences take priority over function-call
@@ -443,7 +447,6 @@ See also: `picard-tab-width', `picard-indent-line'."
                 nil   ; CASE-FOLD: nil means case-sensitive matching.
                 nil   ; SYNTAX-ALIST: no additional syntax modifications.
                 nil)) ; SYNTAX-BEGIN: nil = use font-lock defaults.
-  (setq-local font-lock-string-face nil) ; "everything is a string", so disable quoted string syntax
 
   ;; ── Syntax propertize ─────────────────────────────────────────────────
   ;; Assign the $noop-detection function.  Emacs calls this before each
