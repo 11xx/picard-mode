@@ -75,6 +75,7 @@
 ;; `picard-indent-level').  The require is optional: if the non-ts
 ;; variant is not installed, this mode still functions correctly.
 (require 'picard-mode nil 'noerror)
+(require 'picard-core nil 'noerror)
 
 
 ;;;; ── Grammar Source ───────────────────────────────────────────────────────
@@ -636,6 +637,8 @@ Revert Picard Script buffers to activate tree-sitter mode."))
     (picard-completion-setup)))
 
 (add-hook 'picard-ts-mode-hook #'picard-ts-mode--setup-extras)
+
+(add-hook 'picard-ts-mode-hook #'picard-ts-mode--setup-builtin-variables)
 
 
 ;;;; ── Provide ─────────────────────────────────────────────────────────────────

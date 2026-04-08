@@ -47,6 +47,7 @@
 ;;;; ─── Dependencies ───────────────────────────────────────────────────────────
 
 (require 'syntax)   ; For syntax-propertize machinery
+(require 'picard-core)
 
 ;;;; ─── Customization Group ────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ of $noop(...) blocks.")
 ;;    Variable names may contain colons (:) in addition to alphanumerics
 ;;    and underscores, per the grammar.
 ;;
-;; 3. Escape sequences (\X and \uXXXX): matched with font-lock-constant-face.
+;; 3. Escape sequences (\X and \uXXXX): matched with font-lock-escape-face.
 ;;    This highlights the escape sequences that Picard itself interprets,
 ;;    giving a visual cue that these are not literal characters.
 ;;
@@ -178,7 +179,7 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
     ;; Matches: \n \t \\ \$ \% \( \) \, and \uXXXX (Unicode escapes)
     (,(rx (or (seq "\\" (any "nts$%()\\,"))
               (seq "\\u" (repeat 4 (any hex-digit)))))
-     (0 'font-lock-constant-face))
+     (0 'font-lock-escape-face))
 
     ;; ── Function names ($funcname) ───────────────────────────────────────
     ;; Matches $identifier but not $noop.  The regex matches any $-prefixed
@@ -427,7 +428,7 @@ locally to prevent accidental space insertion.
 Font-lock highlights:
   • Function names   → `font-lock-function-name-face'
   • Variable names   → `font-lock-variable-name-face'
-  • Escape sequences → `font-lock-constant-face'
+  • Escape sequences → `font-lock-escape-face'
   • Commas           → `font-lock-delimiter-face' (Emacs 29+)
   • $noop blocks     → `font-lock-comment-face' (via syntax-propertize)
 
@@ -536,6 +537,8 @@ if the corresponding file is absent, that feature is simply skipped."
     (picard-completion-setup)))
 
 (add-hook 'picard-mode-hook #'picard-mode--setup-extras)
+
+(add-hook 'picard-mode-hook #'picard-mode--setup-builtin-variables)
 
 
 ;;;; ─── Provide ────────────────────────────────────────────────────────────────

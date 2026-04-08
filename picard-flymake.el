@@ -241,6 +241,188 @@ last open paren."
                   diags))))
       diags)))
 
+;;;; Whitespace-in-conditional-argument check
+
+;; Picard Script evaluates function arguments as strings.  Any characters
+;; that appear literally in the source — including leading spaces — become
+;; part of the evaluated string.  This is a frequent source of mistakes when
+;; authors indent multi-line $if / $if2 / $and / $or / $not calls with spaces
+;; rather than tabs:
+;;
+;;   $if(
+;;     %artist%,        ← the two leading spaces are part of the condition
+;;     great,           ← and these spaces are part of the "then" value
+;;     bad              ← and here
+;;   )
+;;
+;; The Picard runtime passes those leading spaces verbatim to the function,
+;; turning an empty string into " " (which is considered non-empty and therefore
+;; truthy in $if's condition test).  Tab-based indentation does not cause this
+;; problem because Picard's argument parser strips a single leading tab from
+;; each argument line.
+;;
+;; The check emits a `:note' diagnostic (informational, not error) because the
+;; pattern may be intentional.  Severity `:note' keeps the warning visible in
+;; the Flymake gutter without being alarmist.
+;;
+;; The set of guarded conditionals is limited to those that evaluate their
+;; arguments eagerly in a position where extra whitespace is most misleading:
+;; $if, $if2 (first non-empty), $and, $or, $not.  Other functions ($set,
+;; $replace, …) may legitimately want leading spaces in string arguments.
+
+(defconst picard-flymake--conditional-functions
+  '("$if" "$if2" "$and" "$or" "$not")
+  "Picard Script conditional functions checked for leading-space arguments.
+Leading spaces in the arguments of these functions alter the truthiness
+of the condition or the returned value in non-obvious ways.")
+
+(defun picard-flymake--scan-whitespace-args-treesit (buffer)
+  "Scan BUFFER tree-sitter nodes for leading spaces in conditional arguments.
+
+Walks every `function_call' node in the parse tree.  For each call whose
+name matches an entry in `picard-flymake--conditional-functions', examines
+every `argument' child node.  If the raw source text of an argument contains
+a newline followed by one or more space characters (with at most one leading
+tab between the newline and the spaces), a `:note' diagnostic is emitted at
+the position of the space run.
+
+The field used to retrieve the function name is \"name\", which the grammar
+exposes on `function_call' nodes.  The sigil \"$\" is prepended before the
+member test because the `function_name' node text contains only the bare
+identifier (e.g. \"if\"), while `picard-flymake--conditional-functions' stores
+the full token (e.g. \"$if\").
+
+Only the first offending space run per argument is reported to avoid
+diagnostic flooding when an argument spans many indented lines.
+
+Returns a (possibly empty) list of `flymake-diagnostic' objects."
+  (with-current-buffer buffer
+    (let ((diags nil))
+      (when (picard-flymake--treesit-available-p)
+        (condition-case err
+            (let ((captures (treesit-query-capture
+                             (treesit-buffer-root-node)
+                             '((function_call) @call))))
+              (dolist (capture captures)
+                (let* ((call-node (cdr capture))
+                       (name-node (treesit-node-child-by-field-name
+                                   call-node "name"))
+                       (func-name (when name-node
+                                    (treesit-node-text name-node t))))
+                  (when (and func-name
+                             (member (concat "$" func-name)
+                                     picard-flymake--conditional-functions))
+                    (dolist (child (treesit-node-children call-node t))
+                      (when (string= (treesit-node-type child) "argument")
+                        (let* ((arg-start (treesit-node-start child))
+                               (arg-text  (treesit-node-text child t)))
+                          ;; `arg-text' is the raw source span of this argument
+                          ;; node, including any surrounding whitespace that
+                          ;; appears literally in the source file.
+                          ;;
+                          ;; A multi-line argument indented with spaces looks
+                          ;; like "\n  value" or "\n\t  value" (tab then
+                          ;; spaces).  Picard's runtime passes those characters
+                          ;; verbatim to the function, so a leading space turns
+                          ;; an otherwise empty string into " ", which is
+                          ;; truthy in $if conditions.  A single leading tab is
+                          ;; harmless because Picard strips it; spaces are not
+                          ;; stripped.
+                          ;;
+                          ;; The regexp matches:
+                          ;;   \n      a newline — confirms this is a multi-line
+                          ;;           argument, not an intentional leading space
+                          ;;           on a single-line call
+                          ;;   \t?     an optional single tab (harmless indent)
+                          ;;   \( +\)  one or more space characters — the
+                          ;;           offending run, captured as group 1
+                          ;;
+                          ;; `match-beginning 1' / `match-end 1' give the byte
+                          ;; offsets of the space run within `arg-text'.
+                          ;; Adding `arg-start' converts them to absolute
+                          ;; buffer positions for `flymake-make-diagnostic'.
+                          (when (string-match "\n\t?\\( +\\)" arg-text)
+                            (push (flymake-make-diagnostic
+                                   buffer
+                                   (+ arg-start (match-beginning 1))
+                                   (+ arg-start (match-end 1))
+                                   :note
+                                   (concat
+                                    "Leading spaces in argument are significant "
+                                    "in Picard Script \u2014 they become part of "
+                                    "the evaluated string. "
+                                    "Use tabs for indentation inside function "
+                                    "calls."))
+                                  diags)))))))))
+          (error
+           (message "picard-flymake whitespace scan: %S" err))))
+      diags)))
+
+(defun picard-flymake--scan-whitespace-args-traditional (buffer)
+  "Scan BUFFER text for leading spaces in conditional function arguments.
+
+This is the fallback path used when tree-sitter is unavailable.  It
+locates `$if(', `$if2(', `$and(', `$or(', and `$not(' patterns, then
+scans the argument regions character by character for lines that begin
+with space characters (after an optional leading tab) at paren depth 1.
+
+Returns a list of `flymake-diagnostic' objects with severity `:note'."
+  (with-current-buffer buffer
+    (let ((diags '())
+          ;; Regexp to detect the opening of a guarded conditional call.
+          ;; The alternation is anchored to `$' and matches exactly the
+          ;; five function names without greedily capturing longer names.
+          (cond-re (rx "$" (or "if2" "if" "and" "or" "not") "(")))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward cond-re nil t)
+          ;; Point is now just after the opening `('; begin scanning from here.
+          (let ((depth 1)
+                (scan-start (point)))
+            (save-excursion
+              ;; Walk characters at depth 1, looking for newline followed by
+              ;; optional tab followed by one or more spaces.
+              (goto-char scan-start)
+              (while (and (> depth 0) (not (eobp)))
+                (let ((ch (char-after)))
+                  (cond
+                   ;; Skip backslash escapes.
+                   ((eq ch ?\\)
+                    (forward-char 2))
+                   ((eq ch ?\()
+                    (setq depth (1+ depth))
+                    (forward-char 1))
+                   ((eq ch ?\))
+                    (setq depth (1- depth))
+                    (forward-char 1))
+                   ;; Newline at depth 1: check the next characters for
+                   ;; indentation-with-spaces.  A line beginning with
+                   ;; \n (\t?) (SPACE+) at depth 1 triggers the warning.
+                   ((and (eq ch ?\n) (= depth 1))
+                    (forward-char 1)          ; consume the newline
+                    (when (eq (char-after) ?\t)
+                      (forward-char 1))       ; consume optional single tab
+                    (when (eq (char-after) ?\ )
+                      ;; One or more spaces follow: record the region.
+                      (let ((space-start (point)))
+                        (skip-chars-forward " ")
+                        (push (flymake-make-diagnostic
+                               buffer
+                               space-start
+                               (point)
+                               :note
+                               (concat
+                                "Leading spaces in argument are significant "
+                                "in Picard Script \u2014 they become part of "
+                                "the evaluated string. "
+                                "Use tabs for indentation inside function "
+                                "calls."))
+                              diags))))
+                   (t
+                    (forward-char 1)))))))))
+      diags)))
+
+
 ;;;; Tree-sitter path
 
 (defun picard-flymake--treesit-available-p ()
@@ -330,7 +512,7 @@ a list of diagnostics after scanning the buffer.
 The backend is synchronous and processes the buffer in one pass.  It is
 registered in `flymake-diagnostic-functions' by `picard-flymake-setup'.
 
-Diagnostics are produced by two complementary analyses:
+Diagnostics are produced by three complementary analyses:
 
   1. Function-call validation — checks unknown names and arity violations.
      Tree-sitter is preferred; regex scanning is used as fallback.
@@ -338,17 +520,36 @@ Diagnostics are produced by two complementary analyses:
   2. Delimiter balance checking — finds unmatched `%' signs and parentheses.
      This scan is always performed, regardless of tree-sitter availability.
 
-See `picard-flymake--scan-treesit', `picard-flymake--scan-traditional', and
-`picard-flymake--scan-delimiter-balance' for implementation details."
+  3. Whitespace-in-conditional-argument checking — warns when a conditional
+     function (`$if', `$if2', `$and', `$or', `$not') has an argument that
+     begins with space characters after a newline, indicating that the author
+     used space-based indentation inside the call.  Leading spaces are
+     significant in Picard Script and become part of the evaluated string.
+     Reported with severity `:note' because the pattern may be intentional.
+     Tree-sitter is preferred; character scanning is used as fallback.
+
+See `picard-flymake--scan-treesit', `picard-flymake--scan-traditional',
+`picard-flymake--scan-delimiter-balance',
+`picard-flymake--scan-whitespace-args-treesit', and
+`picard-flymake--scan-whitespace-args-traditional' for implementation details."
   (let* ((buffer (current-buffer))
-         ;; Choose scan strategy based on tree-sitter availability.
+         ;; Choose function-call validation strategy based on tree-sitter
+         ;; availability.  Tree-sitter is preferred because it provides exact
+         ;; node boundaries without regexp heuristics.
          (call-diags
           (if (picard-flymake--treesit-available-p)
               (picard-flymake--scan-treesit buffer)
             (picard-flymake--scan-traditional buffer)))
-         ;; Delimiter balance is always checked.
+         ;; Delimiter balance is always checked, regardless of tree-sitter.
          (delim-diags (picard-flymake--scan-delimiter-balance buffer))
-         (all-diags (append call-diags delim-diags)))
+         ;; Whitespace-in-conditional-argument check: also prefers the
+         ;; tree-sitter path when available.  This check is independent of
+         ;; the arity validation above; both run in the same backend call.
+         (ws-diags
+          (if (picard-flymake--treesit-available-p)
+              (picard-flymake--scan-whitespace-args-treesit buffer)
+            (picard-flymake--scan-whitespace-args-traditional buffer)))
+         (all-diags (append call-diags delim-diags ws-diags)))
     (funcall report-fn all-diags)))
 
 ;;;; Setup entry point
