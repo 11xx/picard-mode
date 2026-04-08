@@ -1,0 +1,94 @@
+================================================================================
+Multiline noop comment
+================================================================================
+
+$noop(
+  This script normalizes artist names
+  and handles edge cases (like "Various Artists")
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (noop)
+  (text))
+
+================================================================================
+Multiline function call
+================================================================================
+
+$if(%compilation%,
+	$set(albumartist,Various Artists),
+	$set(albumartist,%albumartist%)
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (variable
+        name: (variable_name)))
+    (argument
+      (argument_text)
+      (function_call
+        name: (function_name)
+        (argument
+          (argument_text))
+        (argument
+          (argument_text))))
+    (argument
+      (argument_text)
+      (function_call
+        name: (function_name)
+        (argument
+          (argument_text))
+        (argument
+          (variable
+            name: (variable_name))))
+      (argument_text)))
+  (text))
+
+================================================================================
+Escape inside function argument
+================================================================================
+
+$set(title,hello \$ world)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (argument_text))
+    (argument
+      (argument_text)
+      (escape_sequence)
+      (argument_text)))
+  (text))
+
+================================================================================
+Noop inside function argument
+================================================================================
+
+$if(%flag%,value,$noop(disabled branch))
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (variable
+        name: (variable_name)))
+    (argument
+      (argument_text))
+    (argument
+      (noop)))
+  (text))

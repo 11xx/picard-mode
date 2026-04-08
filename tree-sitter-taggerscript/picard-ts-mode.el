@@ -110,7 +110,7 @@
 ;; `treesit-extra-load-path' or the default user grammar directory.
 
 (defvar picard-ts-mode--grammar-source
-  '(taggerscript "https://github.com/user/tree-sitter-taggerscript")
+  '(taggerscript "~/code/emacs/picard-mode/tree-sitter-taggerscript/")
   "Source for the taggerscript tree-sitter grammar.
 To be added to `treesit-language-source-alist' for automatic installation.
 The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
@@ -216,9 +216,14 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    ;; `name:'.  Specifying the field makes the query more precise and
    ;; avoids matching function_name nodes that might appear in other
    ;; positions (unlikely here, but good practice).
+   ;;
+   ;; The `$' sigil is an anonymous node within `function_call'.  It
+   ;; receives `font-lock-keyword-face' to visually distinguish the call
+   ;; prefix from the function name itself.
    :language 'taggerscript
    :feature 'function
-   '((function_call name: (function_name) @font-lock-function-call-face))
+   '((function_call "$" @font-lock-keyword-face)
+     (function_call name: (function_name) @font-lock-function-call-face))
 
    ;; ── Level 2 — Variables ───────────────────────────────────────────
    ;; The `variable' node wraps the entire %varname% token.  Its child
@@ -269,7 +274,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    :language 'taggerscript
    :feature 'string
    :override 'keep
-   '((text) @font-lock-string-face))
+   '((text) @font-lock-string-face
+     (argument_text) @font-lock-string-face))
 
   "Tree-sitter font-lock settings for `picard-ts-mode'.
 Compiled by `treesit-font-lock-rules' into the internal representation

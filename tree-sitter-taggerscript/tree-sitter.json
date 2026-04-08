@@ -1,0 +1,43 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "taggerscript",
+      "camelcase": "TaggerScript",
+      "title": "TaggerScript",
+      "scope": "source.taggerscript",
+      "file-types": [
+        "taggerscript",
+        "ptsp",
+        "picard"
+      ],
+      "injection-regex": "^taggerscript$",
+      "class-name": "TreeSitterTaggerscript"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "UNLICENSE",
+    "description": "Tree-sitter grammar for MusicBrainz Picard Tagger Script",
+    "authors": [
+      {
+        "name": "11xx",
+        "url": ""
+      }
+    ],
+    "links": {
+      "repository": "",
+      "funding": ""
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": false,
+    "java": false,
+    "node": true,
+    "python": false,
+    "rust": false,
+    "swift": false,
+    "zig": false
+  }
+}

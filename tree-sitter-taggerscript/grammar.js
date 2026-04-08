@@ -123,7 +123,7 @@ module.exports = grammar({
     // Higher precedence (1) ensures the parser picks this rule over the generic
     // `function_call` rule when both could match a `$noop(` prefix.
     noop: $ => prec(1, seq(
-      '$noop',
+      '$noop(',
       field('body', $._noop_content),
     )),
 
