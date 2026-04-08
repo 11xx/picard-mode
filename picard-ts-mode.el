@@ -1,25 +1,10 @@
 ;;; picard-ts-mode.el --- Tree-sitter support for Picard Tagger Script -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2026 Free Software Foundation, Inc.
-
-;; Author: MusicBrainz Contributors
-;; Version: 0.1.0
+;; Author: 11xx
+;; Version: 2026.04.08
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages music musicbrainz picard tagger tree-sitter
 ;; URL: https://github.com/user/picard-ts-mode
-
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
-
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -110,7 +95,7 @@
 ;; `treesit-extra-load-path' or the default user grammar directory.
 
 (defvar picard-ts-mode--grammar-source
-  '(taggerscript "~/code/emacs/picard-mode/tree-sitter-taggerscript/")
+  '(taggerscript "https://github.com/user/tree-sitter-taggerscript")
   "Source for the taggerscript tree-sitter grammar.
 To be added to `treesit-language-source-alist' for automatic installation.
 The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
@@ -222,8 +207,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    ;; prefix from the function name itself.
    :language 'taggerscript
    :feature 'function
-   '((function_call "$" @font-lock-keyword-face)
-     (function_call name: (function_name) @font-lock-function-call-face))
+   '((function_call "$" @font-lock-function-call-face)
+     (function_call name: (function_name) @font-lock-function-name-face))
 
    ;; ── Level 2 — Variables ───────────────────────────────────────────
    ;; The `variable' node wraps the entire %varname% token.  Its child
@@ -238,8 +223,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    :language 'taggerscript
    :feature 'variable
    :override t
-   '((variable (variable_name) @font-lock-variable-use-face)
-     (variable "%" @font-lock-bracket-face))
+   '((variable (variable_name) @font-lock-variable-name-face)
+     (variable "%" @font-lock-variable-name-face))
 
    ;; ── Level 3 — Escape Sequences ────────────────────────────────────
    ;; Escape sequences (\n, \t, \uXXXX) deserve their own feature so that
@@ -590,6 +575,9 @@ Keyboard bindings inherited from `prog-mode':
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.pts\\'" . picard-ts-mode))
 
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.ptsp\\'" . picard-ts-mode))
+
 
 ;;;; ── Transparent Upgrade via major-mode-remap-alist ────────────────────────
 
@@ -630,6 +618,24 @@ files to activate tree-sitter highlighting."
   (treesit-install-language-grammar 'taggerscript)
   (message "taggerscript grammar installed.  \
 Revert Picard Script buffers to activate tree-sitter mode."))
+
+
+;;;; ── Optional Feature Integration ──────────────────────────────────────────
+
+;; Same extras pattern as picard-mode: load flymake, eldoc, and completion
+;; when available.
+
+(defun picard-ts-mode--setup-extras ()
+  "Activate optional flymake, eldoc, and completion features."
+  (when (require 'picard-flymake nil t)
+    (picard-flymake-setup)
+    (flymake-mode 1))
+  (when (require 'picard-eldoc nil t)
+    (picard-eldoc-setup))
+  (when (require 'picard-completion nil t)
+    (picard-completion-setup)))
+
+(add-hook 'picard-ts-mode-hook #'picard-ts-mode--setup-extras)
 
 
 ;;;; ── Provide ─────────────────────────────────────────────────────────────────

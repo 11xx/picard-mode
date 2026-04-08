@@ -1,7 +1,7 @@
 ;;; picard-mode.el --- MusicBrainz Picard Tagger Script mode -*- lexical-binding: t; -*-
 
 ;; Author: 11xx
-;; Version: 1.0.0
+;; Version: 2026.04.08
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, musicbrainz, picard, tagger
 ;; URL: https://musicbrainz.org/doc/Picard_Tagger_Script
@@ -190,7 +190,7 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
     ;; so that the paren retains its structural syntax-class coloring.
     (,(rx "$" (not (any space)) (zero-or-more (any alnum "_")))
      (0 (when (not (string-equal (match-string 0) "$noop"))
-          'font-lock-keyword-face)))
+          'font-lock-function-name-face)))
 
     ;; ── Variable references (%varname%) ─────────────────────────────────
     ;; Per the grammar: identifier  ::= [a-zA-Z0-9_]
@@ -510,6 +510,33 @@ See also: `picard-tab-width', `picard-indent-line'."
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.pts\\'" . picard-mode))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.ptsp\\'" . picard-mode))
+
+
+;;;; ─── Optional Feature Integration ──────────────────────────────────────────
+
+;; Load flymake, eldoc, and completion support when the corresponding
+;; packages are available.  Each feature file provides a `-setup' function
+;; that registers the appropriate hook.  Failures are silently ignored so
+;; the base mode always works even without the extra packages.
+
+(defun picard-mode--setup-extras ()
+  "Activate optional flymake, eldoc, and completion features.
+
+Called from `picard-mode-hook'.  Each feature is loaded lazily:
+if the corresponding file is absent, that feature is simply skipped."
+  (when (require 'picard-flymake nil t)
+    (picard-flymake-setup)
+    (flymake-mode 1))
+  (when (require 'picard-eldoc nil t)
+    (picard-eldoc-setup))
+  (when (require 'picard-completion nil t)
+    (picard-completion-setup)))
+
+(add-hook 'picard-mode-hook #'picard-mode--setup-extras)
+
 
 ;;;; ─── Provide ────────────────────────────────────────────────────────────────
 

@@ -1,0 +1,284 @@
+================================================================================
+Real-world: disc number padding with $if2 and empty args
+================================================================================
+
+$set(checkPadDiscNumber
+	,$if2(
+		$if($gte(%totaldiscs%,10000),	$if(%discnumber%, \(Disc $num(%discnumber%,5)\)),)
+		,$if($gte(%totaldiscs%,1000),	$if(%discnumber%, \(Disc $num(%discnumber%,4)\)),)
+		,$if($gt(%totaldiscs%,1),			$if(%discnumber%, \(Disc $num(%discnumber%,1)\)),)
+	)
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (argument_text))
+    (argument
+      (function_call
+        name: (function_name)
+        (argument
+          (argument_text)
+          (function_call
+            name: (function_name)
+            (argument
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text))))
+            (argument
+              (argument_text)
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text)
+                  (escape_sequence)
+                  (argument_text)
+                  (function_call
+                    name: (function_name)
+                    (argument
+                      (variable
+                        name: (variable_name)))
+                    (argument
+                      (argument_text)))
+                  (escape_sequence)))))
+          (argument_text))
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text))))
+            (argument
+              (argument_text)
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text)
+                  (escape_sequence)
+                  (argument_text)
+                  (function_call
+                    name: (function_name)
+                    (argument
+                      (variable
+                        name: (variable_name)))
+                    (argument
+                      (argument_text)))
+                  (escape_sequence)))))
+          (argument_text))
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text))))
+            (argument
+              (argument_text)
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text)
+                  (escape_sequence)
+                  (argument_text)
+                  (function_call
+                    name: (function_name)
+                    (argument
+                      (variable
+                        name: (variable_name)))
+                    (argument
+                      (argument_text)))
+                  (escape_sequence)))))
+          (argument_text)))
+      (argument_text)))
+  (text))
+
+================================================================================
+Real-world: media format spec with inline noop comments
+================================================================================
+
+$set(mediaFormatSpec
+	$noop(DSD is always '1bit' so only output this if greater than 1)
+	,$if($gt(%_bits_per_sample%,1),%_bits_per_sample%bit )
+	$div(%_sample_rate%,1000)$if($ne($mod(%_sample_rate%,1000),0),.$left($mod(%_sample_rate%,1000),1))kHz
+	$if($in(%media%,Vinyl), Vinyl)
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (argument_text)
+      (noop)
+      (argument_text))
+    (argument
+      (function_call
+        name: (function_name)
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (variable
+                name: (variable_name)))
+            (argument
+              (argument_text))))
+        (argument
+          (variable
+            name: (variable_name))
+          (argument_text)))
+      (argument_text)
+      (function_call
+        name: (function_name)
+        (argument
+          (variable
+            name: (variable_name)))
+        (argument
+          (argument_text)))
+      (function_call
+        name: (function_name)
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text))))
+            (argument
+              (argument_text))))
+        (argument
+          (argument_text)
+          (function_call
+            name: (function_name)
+            (argument
+              (function_call
+                name: (function_name)
+                (argument
+                  (variable
+                    name: (variable_name)))
+                (argument
+                  (argument_text))))
+            (argument
+              (argument_text)))))
+      (argument_text)
+      (function_call
+        name: (function_name)
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (variable
+                name: (variable_name)))
+            (argument
+              (argument_text))))
+        (argument
+          (argument_text)))
+      (argument_text)))
+  (text))
+
+================================================================================
+Real-world: regex replace with empty replacement and escaped regex
+================================================================================
+
+$set(rreplacePattern,[:?"_*\\]+)
+
+$set(generalSanitized
+	,$rreplace($rreplace(%generalFormat%,%rreplacePattern%,),\\s+, )
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (argument_text))
+    (argument
+      (argument_text)
+      (escape_sequence)
+      (argument_text)))
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (argument_text))
+    (argument
+      (function_call
+        name: (function_name)
+        (argument
+          (function_call
+            name: (function_name)
+            (argument
+              (variable
+                name: (variable_name)))
+            (argument
+              (variable
+                name: (variable_name)))))
+        (argument
+          (escape_sequence)
+          (argument_text))
+        (argument
+          (argument_text)))
+      (argument_text)))
+  (text))
+
+================================================================================
+Real-world: final conditional with variable-based format selection
+================================================================================
+
+$if(%notVariousArtists%
+	,%generalSanitized%
+	,%VASanitized%
+)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (text)
+  (function_call
+    name: (function_name)
+    (argument
+      (variable
+        name: (variable_name))
+      (argument_text))
+    (argument
+      (variable
+        name: (variable_name))
+      (argument_text))
+    (argument
+      (variable
+        name: (variable_name))
+      (argument_text)))
+  (text))

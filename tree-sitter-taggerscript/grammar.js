@@ -149,11 +149,27 @@ module.exports = grammar({
     // -------------------------------------------------------------------------
     // _argument_list – comma-separated sequence of arguments
     // -------------------------------------------------------------------------
-    // Produces one or more `argument` nodes separated by literal commas.  The
-    // commas are anonymous tokens in the tree (not captured as named nodes).
-    _argument_list: $ => seq(
+    // Arguments are separated by commas.  Crucially, any argument position may
+    // be EMPTY – Picard treats empty arguments as empty strings.  Examples:
+    //   $if(a,b,)    – three arguments, last is empty
+    //   $if(a,,c)    – three arguments, middle is empty
+    //   $if(,,,)     – four empty arguments
+    //
+    // Tree-sitter forbids rules that match the empty string, so the list is
+    // structured as: either a single non-empty argument, or one or more
+    // comma-separated slots where each slot's content is optional.  A bare
+    // comma always signals the presence of an argument boundary even when both
+    // adjacent slots are empty.
+    _argument_list: $ => choice(
+      // Case 1: single argument with no commas  –  $func(arg)
       $.argument,
-      repeat(seq(',', $.argument)),
+      // Case 2: at least one comma exists  –  covers all multi-arg and
+      // empty-arg scenarios including $func(,), $func(a,), $func(,a),
+      // $func(a,b,c), $func(,,) etc.
+      seq(
+        optional($.argument),
+        repeat1(seq(',', optional($.argument))),
+      ),
     ),
 
     // -------------------------------------------------------------------------
@@ -163,6 +179,10 @@ module.exports = grammar({
     // escape sequences, and argument-text.  Argument text is a restricted form
     // of text that excludes the special characters '(', ')', and ',' so the
     // parser can unambiguously locate argument boundaries.
+    //
+    // When an argument position is empty (e.g. between consecutive commas or
+    // before ')'), no `argument` node is produced — the `optional()` wrapper
+    // in `_argument_list` simply yields nothing.
     argument: $ => repeat1(
       choice(
         $.variable,
