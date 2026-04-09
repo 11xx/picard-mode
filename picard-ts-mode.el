@@ -563,6 +563,9 @@ Keyboard bindings inherited from `prog-mode':
     ;; Delegate all treesit variable setup to the dedicated function.
     (picard-ts-mode--setup)))
 
+;; Show combined Eldoc help for the thing at point.
+(define-key picard-ts-mode-map (kbd "C-c C-d") #'picard-eldoc-show-all)
+
 
 ;;;; ── Auto-mode Association ──────────────────────────────────────────────────
 

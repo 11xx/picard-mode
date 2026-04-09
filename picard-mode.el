@@ -406,6 +406,9 @@ Inherits all standard Emacs bindings.  Navigation, comment insertion, and
 indentation are handled through the mode's syntax table, `comment-dwim',
 and `picard-indent-line' respectively.")
 
+;; Show combined Eldoc help for the thing at point.
+(define-key picard-mode-map (kbd "C-c C-d") #'picard-eldoc-show-all)
+
 ;;;; ─── Mode Definition ────────────────────────────────────────────────────────
 
 ;;;###autoload

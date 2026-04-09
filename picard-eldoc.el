@@ -370,61 +370,94 @@ with :name and :info keys, or nil."
           result)
       (error nil))))
 
-;;;; Eldoc function
+;;;; Eldoc functions
 
-(defun picard-eldoc-function (cb &rest _ignored)
-  "Eldoc documentation function for Picard Tagger Script.
+(defun picard-eldoc--function-doc (cb &rest _ignored)
+  "Return Eldoc documentation for a Picard function call at point.
 
 CB is the callback supplied by Eldoc (Emacs 28+).  When CB is non-nil
-the result string is passed to it; otherwise it is returned directly.
-This matches the multi-source protocol described in
-`(info \"(emacs) Eldoc\")'.
-
-The function first determines whether point is inside a function call or
-a variable reference, then formats an appropriate documentation string.
-
-Function signature format:
-  $funcname(arg1, arg2[, opt]) — category: one-line description.
-
-Variable format:
-  %varname% — category: one-line description."
+the result string is passed to it; otherwise it is returned directly."
   (let* ((func-ctx
           (if (picard-eldoc--treesit-available-p)
               (picard-eldoc--function-context-treesit)
             (picard-eldoc--function-context-traditional)))
-         (var-ctx
-          (unless func-ctx
-            (if (picard-eldoc--treesit-available-p)
-                (picard-eldoc--variable-context-treesit)
-              (picard-eldoc--variable-context-traditional))))
          (doc-string
-          (cond
-           (func-ctx
+          (when func-ctx
             (picard-eldoc--make-signature
              (plist-get func-ctx :name)
              (plist-get func-ctx :info)
-             (plist-get func-ctx :current-arg)))
-           (var-ctx
-            (let* ((name (plist-get var-ctx :name))
-                   (info (plist-get var-ctx :info))
-                   (cat  (if info (plist-get info :category) "unknown"))
-                   (doc  (if info (plist-get info :doc) "User-defined variable.")))
-              (format "%%%s%% — %s: %s"
-                      name cat doc)))
-           (t nil))))
+             (plist-get func-ctx :current-arg)))))
     (if cb
         (when doc-string
           (funcall cb doc-string))
       doc-string)))
 
+(defun picard-eldoc--variable-doc (cb &rest _ignored)
+  "Return Eldoc documentation for a Picard variable at point.
+
+CB is the callback supplied by Eldoc (Emacs 28+).  When CB is non-nil
+the result string is passed to it; otherwise it is returned directly."
+  (let* ((var-ctx
+          (if (picard-eldoc--treesit-available-p)
+              (picard-eldoc--variable-context-treesit)
+            (picard-eldoc--variable-context-traditional)))
+         (doc-string
+          (when var-ctx
+            (let* ((name (plist-get var-ctx :name))
+                   (info (plist-get var-ctx :info))
+                   (cat  (if info (plist-get info :category) "unknown"))
+                   (doc  (if info (plist-get info :doc) "User-defined variable.")))
+              (format "%%%s%% — %s: %s"
+                      name cat doc)))))
+    (if cb
+        (when doc-string
+          (funcall cb doc-string))
+      doc-string)))
+
+(defun picard-eldoc-function (cb &rest _ignored)
+  "Legacy combined Eldoc provider for Picard.
+
+Returns function documentation first, then variable documentation if no
+function context is active."
+  (or (apply #'picard-eldoc--function-doc cb _ignored)
+      (apply #'picard-eldoc--variable-doc cb _ignored)))
+
+(defun picard-eldoc-show-all ()
+  "Show all Picard Eldoc docs available at point.
+
+This command uses a dedicated help buffer so function and variable help
+can be viewed together when both apply."
+  (interactive)
+  (let ((function-doc (picard-eldoc--function-doc nil))
+        (variable-doc (picard-eldoc--variable-doc nil)))
+    (with-help-window (help-buffer)
+      (princ "Picard documentation at point\n\n")
+      (cond
+       ((and function-doc variable-doc)
+        (princ "Function:\n")
+        (princ function-doc)
+        (princ "\n\nVariable:\n")
+        (princ variable-doc)
+        (princ "\n"))
+       (function-doc
+        (princ "Function:\n")
+        (princ function-doc)
+        (princ "\n"))
+       (variable-doc
+        (princ "Variable:\n")
+        (princ variable-doc)
+        (princ "\n"))
+       (t
+        (princ "No Picard documentation available at point.\n"))))))
+
 ;;;; Setup entry point
 
 (defun picard-eldoc-setup ()
-  "Register the Picard Eldoc function in the current buffer.
+  "Register the Picard Eldoc functions in the current buffer.
 
-Adds `picard-eldoc-function' to the buffer-local value of
-`eldoc-documentation-functions' (Emacs 28+) or sets the legacy
-`eldoc-documentation-function' variable on older Emacs versions.
+Adds `picard-eldoc--function-doc' and `picard-eldoc--variable-doc' to the
+buffer-local value of `eldoc-documentation-functions' (Emacs 28+) or sets the
+legacy `eldoc-documentation-function' variable on older Emacs versions.
 
 Call this from a major mode hook, typically alongside `eldoc-mode':
 
@@ -434,7 +467,9 @@ Call this from a major mode hook, typically alongside `eldoc-mode':
               (eldoc-mode 1)))"
   (if (boundp 'eldoc-documentation-functions)
       ;; Emacs 28+: multi-source protocol.
-      (add-hook 'eldoc-documentation-functions #'picard-eldoc-function nil t)
+      (progn
+        (add-hook 'eldoc-documentation-functions #'picard-eldoc--function-doc nil t)
+        (add-hook 'eldoc-documentation-functions #'picard-eldoc--variable-doc nil t))
     ;; Emacs < 28: single function protocol.
     (setq-local eldoc-documentation-function #'picard-eldoc-function)))
 
