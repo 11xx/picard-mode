@@ -528,16 +528,11 @@ See also: `picard-tab-width', `picard-indent-line'."
 
 Called from `picard-mode-hook'.  Each feature is loaded lazily:
 if the corresponding file is absent, that feature is simply skipped."
-  (when (require 'picard-flymake nil t)
-    (picard-flymake-setup)
-    (flymake-mode 1))
-  (picard--setup-eldoc)
-  (when (require 'picard-completion nil t)
-    (picard-completion-setup)))
+  (picard--setup-optional-features))
 
 (add-hook 'picard-mode-hook #'picard-mode--setup-extras)
 
-(add-hook 'picard-mode-hook #'picard-mode--setup-builtin-variables)
+(add-hook 'picard-mode-hook #'picard--setup-builtin-variables)
 
 
 ;;;; ─── Provide ────────────────────────────────────────────────────────────────

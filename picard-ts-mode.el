@@ -628,16 +628,11 @@ Revert Picard Script buffers to activate tree-sitter mode."))
 
 (defun picard-ts-mode--setup-extras ()
   "Activate optional flymake, eldoc, and completion features."
-  (when (require 'picard-flymake nil t)
-    (picard-flymake-setup)
-    (flymake-mode 1))
-  (picard--setup-eldoc)
-  (when (require 'picard-completion nil t)
-    (picard-completion-setup)))
+  (picard--setup-optional-features))
 
 (add-hook 'picard-ts-mode-hook #'picard-ts-mode--setup-extras)
 
-(add-hook 'picard-ts-mode-hook #'picard-ts-mode--setup-builtin-variables)
+(add-hook 'picard-ts-mode-hook #'picard--setup-builtin-variables)
 
 
 ;;;; ── Provide ─────────────────────────────────────────────────────────────────

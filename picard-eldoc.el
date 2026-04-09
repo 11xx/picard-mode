@@ -312,21 +312,29 @@ path (keys :name, :info, :current-arg) or nil."
           (while (and current (null result))
             (when (string= (treesit-node-type current) "function_call")
               (let* ((name-node  (treesit-node-child-by-field-name
-                                  current "function_name"))
+                                  current "name"))
                      (func-name  (when name-node
-                                   (treesit-node-text name-node t)))
-                     (info        (when func-name
+                                   (concat "$" (treesit-node-text name-node t))))
+                     (info       (when func-name
                                    (picard-function-info func-name)))
-                     ;; Determine which argument contains point.
                      (current-arg
                       (when info
-                        (let ((idx 0)
-                              (arg-idx 0))
-                          (dolist (child (treesit-node-children current))
-                            (when (string= (treesit-node-type child) "argument")
-                              (when (<= (treesit-node-start child) (point))
-                                (setq arg-idx idx))
-                              (setq idx (1+ idx))))
+                        (let* ((open-paren (treesit-node-end name-node))
+                               (depth 0)
+                               (arg-idx 0)
+                               (limit (point)))
+                          (save-excursion
+                            (goto-char open-paren)
+                            (while (and (< (point) limit) (not (eobp)))
+                              (let ((ch (char-after)))
+                                (cond
+                                 ((eq ch ?\()
+                                  (setq depth (1+ depth)))
+                                 ((eq ch ?\))
+                                  (setq depth (1- depth)))
+                                 ((and (eq ch ?,) (= depth 1))
+                                  (setq arg-idx (1+ arg-idx))))
+                                (forward-char 1))))
                           arg-idx))))
                 (when info
                   (setq result (list :name func-name
