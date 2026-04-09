@@ -52,5 +52,11 @@ Delegates to `picard--add-builtin-variable-keywords'."
 Delegates to `picard--add-builtin-variable-keywords'."
   (picard--add-builtin-variable-keywords))
 
+(defun picard--setup-eldoc ()
+  "Load Picard Eldoc support and enable `eldoc-mode' in the current buffer."
+  (when (require 'picard-eldoc nil t)
+    (picard-eldoc-setup)
+    (eldoc-mode 1)))
+
 (provide 'picard-core)
 ;;; picard-core.el ends here

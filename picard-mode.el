@@ -531,8 +531,7 @@ if the corresponding file is absent, that feature is simply skipped."
   (when (require 'picard-flymake nil t)
     (picard-flymake-setup)
     (flymake-mode 1))
-  (when (require 'picard-eldoc nil t)
-    (picard-eldoc-setup))
+  (picard--setup-eldoc)
   (when (require 'picard-completion nil t)
     (picard-completion-setup)))
 
