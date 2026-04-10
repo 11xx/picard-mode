@@ -1,7 +1,7 @@
 ;;; picard-completion.el --- Completion-at-point for Picard Tagger Script  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.08
+;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, completion
 ;; URL: https://github.com/example/picard-mode

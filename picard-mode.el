@@ -1,7 +1,7 @@
 ;;; picard-mode.el --- MusicBrainz Picard Tagger Script mode -*- lexical-binding: t; -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.08
+;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, musicbrainz, picard, tagger
 ;; URL: https://musicbrainz.org/doc/Picard_Tagger_Script

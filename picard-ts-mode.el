@@ -1,7 +1,7 @@
 ;;; picard-ts-mode.el --- Tree-sitter support for Picard Tagger Script -*- lexical-binding: t; -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.08
+;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages music musicbrainz picard tagger tree-sitter
 ;; URL: https://github.com/user/picard-ts-mode
