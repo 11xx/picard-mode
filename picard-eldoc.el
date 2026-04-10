@@ -156,52 +156,12 @@ The optional _MIN-ARGS and _MAX-ARGS arguments are accepted for
 call-site symmetry but are not used; bracket wrapping of optional
 arguments is performed by the caller.
 
-A small set of well-known functions have hand-tuned argument names.
-All others fall back to generic positional names from
-`picard--generic-arg-names'."
-  (let ((named
-         (cdr (assoc func-name
-                     '(("$if"       . ("condition" "then" "else"))
-                       ("$foreach"  . ("variable"  "loop-code" "separator"))
-                       ("$map"      . ("variable"  "loop-code" "separator"))
-                       ("$while"    . ("condition" "loop-code"))
-                       ("$set"      . ("name"      "value"))
-                       ("$get"      . ("name"))
-                       ("$unset"    . ("name"))
-                       ("$delete"   . ("name"))
-                       ("$copy"     . ("old"       "new"))
-                       ("$replace"  . ("text"      "old"   "new"))
-                       ("$rreplace" . ("text"      "old"   "new"))
-                       ("$rsearch"  . ("text"      "pattern" "group"))
-                       ("$left"     . ("text"      "length"))
-                       ("$right"    . ("text"      "length"))
-                       ("$substr"   . ("text"      "start" "end"))
-                       ("$pad"      . ("text"      "length" "char"))
-                       ("$num"      . ("number"    "length"))
-                       ("$truncate" . ("text"      "length"))
-                       ("$find"     . ("haystack"  "needle"))
-                       ("$in"       . ("text"      "needle"))
-                       ("$startswith" . ("text"    "prefix"))
-                       ("$endswith"   . ("text"    "suffix"))
-                       ("$eq"       . ("x"         "y"))
-                       ("$ne"       . ("x"         "y"))
-                       ("$lt"       . ("x"         "y"   "base"))
-                       ("$lte"      . ("x"         "y"   "base"))
-                       ("$gt"       . ("x"         "y"   "base"))
-                       ("$gte"      . ("x"         "y"   "base"))
-                       ("$join"     . ("variable"  "separator" "prefix"))
-                       ("$slice"    . ("variable"  "start" "end" "separator"))
-                       ("$getmulti" . ("variable"  "index" "separator"))
-                       ("$trim"     . ("text"      "char"))
-                       ("$strip"    . ("text"))
-                       ("$lower"    . ("text"))
-                       ("$upper"    . ("text"))
-                       ("$title"    . ("text"))
-                       ("$reverse"  . ("text"))
-                       ("$len"      . ("text")))))))
-    (or (and named (nth index named))
-        (nth index picard--generic-arg-names)
-        (format "arg%d" (1+ index)))))
+Argument names are sourced from the `:args' field in `picard-builtin-functions'
+via `picard-function-args'.  When no named parameters are defined for
+FUNC-NAME, falls back to `picard--generic-arg-names'."
+  (or (nth index (picard-function-args func-name))
+      (nth index picard--generic-arg-names)
+      (format "arg%d" (1+ index))))
 
 ;;;; Context detection — traditional (regex) path
 

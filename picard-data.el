@@ -39,251 +39,415 @@
 (defconst picard-builtin-functions
   '(("$add"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Returns the sum of all arguments."))
     ("$and"
      . (:min-args 2 :max-args -1 :category "conditional"
+        :conditional-args -1
+        :args nil
         :doc "Returns true only if ALL arguments are non-empty."))
     ("$cleanmulti"
      . (:min-args 1 :max-args 1 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Removes duplicate and empty entries from a multi-value variable."))
     ("$copy"
      . (:min-args 2 :max-args 2 :category "assignment"
+        :conditional-args nil
+        :args ("old" "new")
         :doc "Copies metadata from variable OLD to NEW."))
     ("$copymerge"
      . (:min-args 2 :max-args 3 :category "assignment"
+        :conditional-args nil
+        :args nil
         :doc "Merges metadata from OLD into NEW, optionally keeping duplicates."))
     ("$countryname"
      . (:min-args 1 :max-args 2 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns the full country name from a two-letter country code."))
     ("$dateformat"
      . (:min-args 1 :max-args 3 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Formats a date string."))
     ("$datetime"
      . (:min-args 0 :max-args 1 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns the current date and time."))
     ("$day"
      . (:min-args 1 :max-args 2 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the day from a date string."))
     ("$delete"
      . (:min-args 1 :max-args 1 :category "assignment"
+        :conditional-args nil
+        :args ("name")
         :doc "Unsets a tag and marks it for deletion from the file."))
     ("$delprefix"
      . (:min-args 1 :max-args -1 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Removes the specified prefixes from the string."))
     ("$div"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Divides the first argument by all subsequent arguments."))
     ("$endswith"
      . (:min-args 2 :max-args 2 :category "conditional"
+        :conditional-args nil
+        :args ("text" "suffix")
         :doc "Returns true if text ends with suffix."))
     ("$eq"
      . (:min-args 2 :max-args 2 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y")
         :doc "Returns true if both arguments are equal (case-insensitive)."))
     ("$eq_all"
      . (:min-args 1 :max-args -1 :category "conditional"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the first arg equals ALL subsequent args."))
     ("$eq_any"
      . (:min-args 1 :max-args -1 :category "conditional"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the first arg equals ANY subsequent arg."))
     ("$find"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("haystack" "needle")
         :doc "Returns the position of needle in haystack, or empty if not found."))
     ("$firstalphachar"
      . (:min-args 0 :max-args 2 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the first alphabetic character, or nonalpha if none."))
     ("$firstwords"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the first LENGTH characters up to a word boundary."))
     ("$foreach"
      . (:min-args 2 :max-args 3 :category "loop"
+        :conditional-args nil
+        :args ("variable" "loop-code" "separator")
         :doc "Iterates over a multi-value variable, executing code for each value."))
     ("$get"
      . (:min-args 1 :max-args 1 :category "assignment"
+        :conditional-args nil
+        :args ("name")
         :doc "Returns the value of a variable by name."))
     ("$getmulti"
      . (:min-args 2 :max-args 3 :category "multi-value"
+        :conditional-args nil
+        :args ("variable" "index" "separator")
         :doc "Returns the item at the given index in a multi-value variable."))
     ("$gt"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y" "base")
         :doc "Returns true if x is greater than y."))
     ("$gte"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y" "base")
         :doc "Returns true if x is greater than or equal to y."))
     ("$if"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args 0
+        :args ("condition" "then" "else")
         :doc "If condition is non-empty, returns then; otherwise returns else."))
     ("$if2"
      . (:min-args 0 :max-args -1 :category "conditional"
+        :conditional-args -1
+        :args nil
         :doc "Returns the first non-empty argument."))
     ("$in"
      . (:min-args 2 :max-args 2 :category "conditional"
+        :conditional-args nil
+        :args ("text" "needle")
         :doc "Returns true if needle is found in text (case-insensitive)."))
     ("$initials"
      . (:min-args 0 :max-args 1 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the first character of each word."))
     ("$inmulti"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if needle matches any value in a multi-value var."))
     ("$is_audio"
      . (:min-args 0 :max-args 0 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the file is an audio file."))
     ("$is_complete"
      . (:min-args 0 :max-args 0 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if all tracks for this album have been matched."))
     ("$is_multi"
      . (:min-args 1 :max-args 1 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the variable contains multiple values."))
     ("$is_video"
      . (:min-args 0 :max-args 0 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the file is a video file."))
     ("$join"
      . (:min-args 2 :max-args 3 :category "multi-value"
+        :conditional-args nil
+        :args ("variable" "separator" "prefix")
         :doc "Joins a multi-value variable with a separator phrase."))
     ("$left"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("text" "length")
         :doc "Returns the first LENGTH characters of TEXT."))
     ("$len"
      . (:min-args 0 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Returns the length of the string."))
     ("$lenmulti"
      . (:min-args 1 :max-args 2 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Returns the number of items in a multi-value variable."))
     ("$lower"
      . (:min-args 1 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Converts text to lowercase."))
     ("$lt"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y" "base")
         :doc "Returns true if x is less than y."))
     ("$lte"
      . (:min-args 2 :max-args 3 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y" "base")
         :doc "Returns true if x is less than or equal to y."))
     ("$map"
      . (:min-args 2 :max-args 3 :category "loop"
+        :conditional-args nil
+        :args ("variable" "loop-code" "separator")
         :doc "Applies code to each element of a multi-value variable, returns results."))
     ("$matchedtracks"
      . (:min-args 0 :max-args 0 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns the number of matched tracks in the album."))
     ("$max"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Returns the maximum of all arguments."))
     ("$min"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Returns the minimum of all arguments."))
     ("$mod"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Returns the modulus (remainder) of division."))
     ("$month"
      . (:min-args 1 :max-args 2 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the month from a date string."))
     ("$mul"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Returns the product of all arguments."))
     ("$ne"
      . (:min-args 2 :max-args 2 :category "conditional"
+        :conditional-args nil
+        :args ("x" "y")
         :doc "Returns true if x and y are NOT equal (case-insensitive)."))
     ("$ne_all"
      . (:min-args 1 :max-args -1 :category "conditional"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the first arg is not equal to ALL subsequent args."))
     ("$ne_any"
      . (:min-args 1 :max-args -1 :category "conditional"
+        :conditional-args nil
+        :args nil
         :doc "Returns true if the first arg is not equal to ANY subsequent arg."))
     ("$noop"
-     . (:min-args 0 :max-args -1 :category "miscellaneous"
+     . (:min-args 0 :max-args -1 :category "comment"
+        :conditional-args nil
+        :args nil
         :doc "Does nothing; returns empty string. Used for comments."))
     ("$not"
      . (:min-args 1 :max-args 1 :category "conditional"
+        :conditional-args 0
+        :args nil
         :doc "Returns true if the argument is empty."))
     ("$num"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("number" "length")
         :doc "Zero-pads a number to LENGTH digits."))
     ("$or"
      . (:min-args 2 :max-args -1 :category "conditional"
+        :conditional-args -1
+        :args nil
         :doc "Returns true if ANY argument is non-empty."))
     ("$pad"
      . (:min-args 3 :max-args 3 :category "text"
+        :conditional-args nil
+        :args ("text" "length" "char")
         :doc "Pads TEXT with CHAR to LENGTH characters."))
     ("$performer"
      . (:min-args 1 :max-args 3 :category "information"
+        :conditional-args nil
+        :args nil
         :doc "Returns performers matching the pattern."))
     ("$replace"
      . (:min-args 3 :max-args 3 :category "text"
+        :conditional-args nil
+        :args ("text" "old" "new")
         :doc "Replaces all occurrences of OLD with NEW in TEXT."))
     ("$replacemulti"
      . (:min-args 3 :max-args 4 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Replaces occurrences in each element of a multi-value variable."))
     ("$reverse"
      . (:min-args 1 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Reverses the characters in the string."))
     ("$reversemulti"
      . (:min-args 1 :max-args 2 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Reverses the order of items in a multi-value variable."))
     ("$right"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("text" "length")
         :doc "Returns the last LENGTH characters of TEXT."))
     ("$rreplace"
      . (:min-args 3 :max-args 3 :category "text"
+        :conditional-args nil
+        :args ("text" "old" "new")
         :doc "Regex replace: replaces matches of pattern OLD in TEXT with NEW."))
     ("$rsearch"
      . (:min-args 2 :max-args 3 :category "text"
+        :conditional-args nil
+        :args ("text" "pattern" "group")
         :doc "Regex search: returns the match group for pattern in TEXT."))
     ("$set"
      . (:min-args 2 :max-args 2 :category "assignment"
+        :conditional-args nil
+        :args ("name" "value")
         :doc "Sets variable NAME to VALUE."))
     ("$setmulti"
      . (:min-args 2 :max-args 3 :category "assignment"
+        :conditional-args nil
+        :args nil
         :doc "Sets a multi-value variable."))
     ("$slice"
      . (:min-args 2 :max-args 4 :category "multi-value"
+        :conditional-args nil
+        :args ("variable" "start" "end" "separator")
         :doc "Returns a slice of a multi-value variable."))
     ("$sortmulti"
      . (:min-args 1 :max-args 2 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Sorts a multi-value variable."))
     ("$startswith"
      . (:min-args 2 :max-args 2 :category "conditional"
+        :conditional-args nil
+        :args ("text" "prefix")
         :doc "Returns true if text starts with prefix."))
     ("$strip"
      . (:min-args 1 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Removes leading and trailing whitespace."))
     ("$sub"
      . (:min-args 2 :max-args -1 :category "mathematical"
+        :conditional-args nil
+        :args nil
         :doc "Subtracts all subsequent arguments from the first."))
     ("$substr"
      . (:min-args 2 :max-args 3 :category "text"
+        :conditional-args nil
+        :args ("text" "start" "end")
         :doc "Returns the substring from START to END index."))
     ("$swapprefix"
      . (:min-args 1 :max-args -1 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Moves a matching prefix to the end after a comma."))
     ("$title"
      . (:min-args 1 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Converts text to Title Case."))
     ("$trim"
      . (:min-args 1 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("text" "char")
         :doc "Trims leading/trailing occurrences of CHAR from text."))
     ("$truncate"
      . (:min-args 2 :max-args 2 :category "text"
+        :conditional-args nil
+        :args ("text" "length")
         :doc "Truncates text to LENGTH characters."))
     ("$unique"
      . (:min-args 1 :max-args 3 :category "multi-value"
+        :conditional-args nil
+        :args nil
         :doc "Removes duplicate values from a multi-value variable."))
     ("$unset"
      . (:min-args 1 :max-args 1 :category "assignment"
+        :conditional-args nil
+        :args ("name")
         :doc "Unsets a tag variable."))
     ("$upper"
      . (:min-args 1 :max-args 1 :category "text"
+        :conditional-args nil
+        :args ("text")
         :doc "Converts text to UPPERCASE."))
     ("$while"
      . (:min-args 2 :max-args 2 :category "loop"
+        :conditional-args 0
+        :args ("condition" "loop-code")
         :doc "Executes code while condition is non-empty."))
     ("$year"
      . (:min-args 1 :max-args 2 :category "text"
+        :conditional-args nil
+        :args nil
         :doc "Returns the year from a date string.")))
   "Alist of all Picard Tagger Script built-in functions.
 
 Each entry has the form (NAME . PLIST) where PLIST contains:
-  :min-args   Minimum number of required arguments (integer).
-  :max-args   Maximum number of arguments; -1 means unlimited (variadic).
-  :category   Functional category string (e.g. \"text\", \"conditional\").
-  :doc        Short documentation string.
+  :min-args          Minimum number of required arguments (integer).
+  :max-args          Maximum number of arguments; -1 means unlimited (variadic).
+  :category          Functional category string (e.g. \"text\", \"conditional\").
+  :conditional-args  Integer: 0 means only arg 0 is a condition, -1 means all
+                     args are conditions, nil means not a conditional function.
+  :args              List of argument name strings (index N = name for arg N),
+                     or nil if the function has no named parameters.
+  :doc               Short documentation string.
 
 The 80 entries correspond to the full set of functions available in
 MusicBrainz Picard 2.x scripting.")
@@ -776,7 +940,8 @@ written to the audio file.")
   "Return the property list for the Picard function NAME, or nil if unknown.
 
 NAME should be a string including the leading dollar sign, e.g. \"$if\".
-The returned plist contains :min-args, :max-args, :category, and :doc keys."
+The returned plist contains :min-args, :max-args, :category, :conditional-args,
+:args, and :doc keys."
   (cdr (assoc name picard-builtin-functions)))
 
 (defun picard-tag-info (name)
@@ -799,6 +964,46 @@ The list is derived from `picard-builtin-functions'."
 Each element is the bare name without percent delimiters, e.g. \"artist\",
 \"_filename\".  The list is derived from `picard-builtin-tags'."
   (mapcar #'car picard-builtin-tags))
+
+(defun picard-data-conditional-functions ()
+  "Return the list of Picard function names that have conditional arguments.
+
+These are functions whose argument whitespace is checked by the Flymake
+whitespace scanner because leading spaces in those arguments can change
+truthiness.  Currently: $if, $if2, $and, $or, $not, $while."
+  (cl-loop for (name . info) in picard-builtin-functions
+           when (plist-get info :conditional-args)
+           collect name))
+
+(defun picard-function-conditional-args (func-name)
+  "Return the conditional-args value for FUNC-NAME.
+
+Returns 0 if only argument 0 is a condition, -1 if all arguments are
+conditions, or nil if FUNC-NAME is not a conditional function."
+  (let ((info (picard-function-info func-name)))
+    (when info
+      (plist-get info :conditional-args))))
+
+(defun picard-function-conditional-arg-p (func-name index)
+  "Return non-nil if argument INDEX of FUNC-NAME is a condition position.
+
+INDEX is zero-based.  Returns non-nil when INDEX falls within the
+conditional-args range for FUNC-NAME (0 means only arg 0 is conditional,
+-1 means all args are conditional)."
+  (let ((cond-args (picard-function-conditional-args func-name)))
+    (cond
+     ((eq cond-args 0) (= index 0))
+     ((eq cond-args -1) t)
+     (t nil))))
+
+(defun picard-function-args (func-name)
+  "Return the argument name list for FUNC-NAME, or nil if none defined.
+
+The returned list has index N corresponding to argument N.  Returns nil
+when FUNC-NAME has no named parameters defined."
+  (let ((info (picard-function-info func-name)))
+    (when info
+      (plist-get info :args))))
 
 (provide 'picard-data)
 ;;; picard-data.el ends here

@@ -277,16 +277,6 @@ last open paren."
 ;; $if, $if2 (first non-empty), $and, $or, $not.  Other functions ($set,
 ;; $replace, …) may legitimately want leading spaces in string arguments.
 
-(defconst picard-flymake--conditional-functions
-  '("$if" "$if2" "$and" "$or" "$not")
-  "Picard Script conditional functions checked for significant spaces.")
-
-(defun picard-flymake--conditional-arg-p (func-name arg-index)
-  "Return non-nil when ARG-INDEX is a condition position for FUNC-NAME."
-  (pcase func-name
-    ((or "$if2" "$and" "$or") t)
-    ((or "$if" "$not") (= arg-index 0))
-    (_ nil)))
 
 (defun picard-flymake--whitespace-diagnostic (buffer start end message)
   "Create a whitespace diagnostic in BUFFER from START to END with MESSAGE."
@@ -323,7 +313,7 @@ Tabs are ignored; only spaces are diagnostic."
                  (arg-index 0))
             (save-excursion
               (goto-char (point))
-              (when (picard-flymake--conditional-arg-p func-name arg-index)
+              (when (picard-function-conditional-arg-p func-name arg-index)
                 (let ((diag (picard-flymake--space-run-diagnostic-at-point
                              buffer
                              "Leading spaces after '(' are significant in Picard Script.")))
@@ -343,7 +333,7 @@ Tabs are ignored; only spaces are diagnostic."
                    ((and (eq ch ?,) (= depth 1))
                     (setq arg-index (1+ arg-index))
                     (forward-char 1)
-                    (when (picard-flymake--conditional-arg-p func-name arg-index)
+                    (when (picard-function-conditional-arg-p func-name arg-index)
                       (let ((diag (picard-flymake--space-run-diagnostic-at-point
                                    buffer
                                    "Leading spaces after ',' are significant in Picard Script.")))
@@ -351,7 +341,7 @@ Tabs are ignored; only spaces are diagnostic."
                    ((eq ch ?\n)
                     (forward-char 1)
                     (when (and (= depth 1)
-                               (picard-flymake--conditional-arg-p func-name arg-index))
+                               (picard-function-conditional-arg-p func-name arg-index))
                       (let ((diag (picard-flymake--space-run-diagnostic-at-point
                                    buffer
                                    "Leading spaces after newline are significant in Picard Script.")))
@@ -412,8 +402,9 @@ at least one parser, meaning the current buffer has a live tree."
                        (node-end   (when name-node
                                      (treesit-node-end name-node))))
                   (cond
-                   ((null func-name))          ; malformed node, skip
-                   ((null info)
+                    ((null func-name))          ; malformed node, skip
+                    ((string= func-name "$noop")) ; $noop is used for comments; skip
+                    ((null info)
                     (push (flymake-make-diagnostic
                            buffer node-start node-end
                            :error
