@@ -292,12 +292,26 @@ last open paren."
   "Create a whitespace diagnostic in BUFFER from START to END with MESSAGE."
   (flymake-make-diagnostic buffer start end :note message))
 
+(defun picard-flymake--space-run-diagnostic-at-point (buffer message)
+  "Return a diagnostic for a leading space run at point, or nil.
+
+Tabs are skipped before testing for spaces.  If the current point does not
+start a space run, return nil."
+  (save-excursion
+    (while (eq (char-after) ?\t)
+      (forward-char 1))
+    (when (eq (char-after) ?\ )
+      (let ((start (point)))
+        (skip-chars-forward " ")
+        (picard-flymake--whitespace-diagnostic
+         buffer start (point) message)))))
+
 (defun picard-flymake--scan-whitespace-args (buffer)
   "Scan BUFFER for significant spaces in conditional function arguments.
 
 This text-based scanner works in both traditional and tree-sitter modes.
-It catches leading spaces after `(', leading spaces after a newline, and
-trailing spaces before `,' or `)' in condition positions."
+It only reports leading space runs at the start of condition arguments.
+Tabs are ignored; only spaces are diagnostic."
   (with-current-buffer buffer
     (let ((diags nil)
           (cond-re (rx "$" (or "if2" "if" "and" "or" "not") "(")))
@@ -305,11 +319,15 @@ trailing spaces before `,' or `)' in condition positions."
         (goto-char (point-min))
         (while (re-search-forward cond-re nil t)
           (let* ((func-name (substring (match-string-no-properties 0) 0 -1))
-                 (open-pos (point))
                  (depth 1)
                  (arg-index 0))
             (save-excursion
-              (goto-char open-pos)
+              (goto-char (point))
+              (when (picard-flymake--conditional-arg-p func-name arg-index)
+                (let ((diag (picard-flymake--space-run-diagnostic-at-point
+                             buffer
+                             "Leading spaces after '(' are significant in Picard Script.")))
+                  (when diag (push diag diags))))
               (while (and (> depth 0) (not (eobp)))
                 (let ((ch (char-after)))
                   (cond
@@ -320,57 +338,24 @@ trailing spaces before `,' or `)' in condition positions."
                     (setq depth (1+ depth))
                     (forward-char 1))
                    ((eq ch ?\))
-                    (when (and (= depth 1)
-                               (picard-flymake--conditional-arg-p func-name arg-index))
-                      (let ((end (point)))
-                        (skip-chars-backward " \t")
-                        (when (< (point) end)
-                          (push (picard-flymake--whitespace-diagnostic
-                                 buffer (point) end
-                                 "Spaces before ')' are significant in Picard Script.")
-                                diags))
-                        (goto-char end)))
                     (setq depth (1- depth))
                     (forward-char 1))
                    ((and (eq ch ?,) (= depth 1))
-                    (when (picard-flymake--conditional-arg-p func-name arg-index)
-                      (let ((end (point)))
-                        (skip-chars-backward " \t")
-                        (when (< (point) end)
-                          (push (picard-flymake--whitespace-diagnostic
-                                 buffer (point) end
-                                 "Spaces before ',' are significant in Picard Script.")
-                                diags))
-                        (goto-char end)))
                     (setq arg-index (1+ arg-index))
-                    (forward-char 1))
+                    (forward-char 1)
+                    (when (picard-flymake--conditional-arg-p func-name arg-index)
+                      (let ((diag (picard-flymake--space-run-diagnostic-at-point
+                                   buffer
+                                   "Leading spaces after ',' are significant in Picard Script.")))
+                        (when diag (push diag diags)))))
                    ((eq ch ?\n)
                     (forward-char 1)
                     (when (and (= depth 1)
                                (picard-flymake--conditional-arg-p func-name arg-index))
-                      (when (eq (char-after) ?\t)
-                        (forward-char 1))
-                      (when (eq (char-after) ?\ )
-                        (let ((start (point)))
-                          (skip-chars-forward " ")
-                          (push (picard-flymake--whitespace-diagnostic
-                                 buffer start (point)
-                                 "Leading spaces after newline are significant in Picard Script.")
-                                diags)))))
-                   ((and (= depth 1)
-                         (= (point) open-pos)
-                         (picard-flymake--conditional-arg-p func-name arg-index))
-                     (when (eq ch ?\t)
-                       (forward-char 1)
-                       (setq ch (char-after)))
-                     (when (eq ch ?\ )
-                       (let ((start (point)))
-                         (skip-chars-forward " ")
-                         (push (picard-flymake--whitespace-diagnostic
-                                buffer start (point)
-                                "Leading spaces after '(' are significant in Picard Script.")
-                               diags)))
-                    (forward-char 1))
+                      (let ((diag (picard-flymake--space-run-diagnostic-at-point
+                                   buffer
+                                   "Leading spaces after newline are significant in Picard Script.")))
+                        (when diag (push diag diags)))))
                    (t
                     (forward-char 1)))))))))
       diags)))
