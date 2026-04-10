@@ -1,15 +1,15 @@
 ;;; picard-ts-mode.el --- Tree-sitter support for Picard Tagger Script -*- lexical-binding: t; -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages music musicbrainz picard tagger tree-sitter
-;; URL: https://github.com/user/picard-ts-mode
+;; URL: https://codeberg.org/useless-utils/picard-mode
 
 ;;; Commentary:
 
 ;; This file provides a tree-sitter-based major mode for MusicBrainz
-;; Picard Tagger Script — the scripting language embedded in MusicBrainz
+;; Picard Tagger Script: the scripting language embedded in MusicBrainz
 ;; Picard for manipulating file tags and metadata.
 ;;
 ;; It is the tree-sitter variant of `picard-mode', intended for use with
@@ -19,7 +19,8 @@
 ;; Tree-sitter grammar named `taggerscript', obtaining accurate,
 ;; incremental syntax highlighting and structure-aware editing.
 ;;
-;; ── Language overview ────────────────────────────────────────────────
+;; Language overview
+;; =========================================================================
 ;;
 ;; Picard Tagger Script is a small expression language with three
 ;; primary constructs:
@@ -31,22 +32,24 @@
 ;; Everything else is treated as literal text.  Noop blocks $noop(...)
 ;; serve as comments; they may contain nested parentheses.
 ;;
-;; ── Tree-sitter grammar ───────────────────────────────────────────────
+;; Tree-sitter grammar
+;; =========================================================================
 ;;
 ;; The grammar is developed at
-;;   https://github.com/user/tree-sitter-taggerscript
+;; https://codeberg.org/useless-utils/tree-sitter-taggerscript
 ;;
 ;; Node types of interest:
 ;;
 ;;   source_file      top-level document node
-;;   function_call    $funcname(...) — children: function_name, argument*
+;;   function_call    $funcname(...): children: function_name, argument*
 ;;   noop             $noop(...) comment block
-;;   variable         %varname% — child: variable_name
+;;   variable         %varname%: child: variable_name
 ;;   escape_sequence  \X or \uXXXX
 ;;   text             literal text content
 ;;   argument         one argument in a function call (may nest)
 ;;
-;; ── Relationship to picard-mode ───────────────────────────────────────
+;; Relationship to picard-mode
+;; ==========================================================================
 ;;
 ;; When the `taggerscript' grammar is available at runtime,
 ;; `picard-ts-mode' registers itself as a transparent upgrade via
@@ -55,7 +58,8 @@
 ;; any user action.  See the bottom of this file for the auto-remap
 ;; logic.
 ;;
-;; ── Usage ─────────────────────────────────────────────────────────────
+;; Usage
+;; ==========================================================================
 ;;
 ;; Install the taggerscript Tree-sitter grammar (once):
 ;;
@@ -78,7 +82,8 @@
 (require 'picard-core nil 'noerror)
 
 
-;;;; ── Grammar Source ───────────────────────────────────────────────────────
+;;;; Grammar Source
+;; ==========================================================================
 
 ;; `treesit-language-source-alist' is the registry Tree-sitter uses to
 ;; locate (and optionally compile and install) grammars on demand.  Each
@@ -96,7 +101,7 @@
 ;; `treesit-extra-load-path' or the default user grammar directory.
 
 (defvar picard-ts-mode--grammar-source
-  '(taggerscript "https://github.com/user/tree-sitter-taggerscript")
+  '(taggerscript "https://codeberg.org/useless-utils/tree-sitter-taggerscript")
   "Source for the taggerscript tree-sitter grammar.
 To be added to `treesit-language-source-alist' for automatic installation.
 The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
@@ -108,10 +113,11 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
 (add-to-list 'treesit-language-source-alist picard-ts-mode--grammar-source)
 
 
-;;;; ── Syntax Table ──────────────────────────────────────────────────────────
+;;;; Syntax Table
+;; ==========================================================================
 
 ;; A syntax table informs Emacs of the syntactic roles of individual
-;; characters — which are word constituents, which are string delimiters,
+;; characters: which are word constituents, which are string delimiters,
 ;; which are comment starters, etc.  Tree-sitter handles structural parsing,
 ;; but the syntax table is still consulted by many built-in commands
 ;; (forward-word, mark-sexp, electric pairs, …).
@@ -137,7 +143,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
   "Syntax table for `picard-ts-mode'.")
 
 
-;;;; ── Font-Lock Rules ────────────────────────────────────────────────────────
+;;;; Font-Lock Rules
+;; ==========================================================================
 
 ;; Tree-sitter font-lock in Emacs 29+ works through *queries* written in the
 ;; Tree-sitter S-expression pattern language, very similar to how
@@ -161,11 +168,11 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
 ;;
 ;;   :override BOOLEAN-OR-STRATEGY
 ;;       Controls what happens when a node has already been fontified.
-;;       nil (default) — do not override existing face.
-;;       t             — always override.
-;;       'prepend      — prepend to existing face.
-;;       'append       — append to existing face.
-;;       'keep         — keep existing face, set only if unset.
+;;       nil (default): do not override existing face.
+;;       t: always override.
+;;       'prepend: prepend to existing face.
+;;       'append: append to existing face.
+;;       'keep: keep existing face, set only if unset.
 ;;
 ;; Query pattern syntax:
 ;;
@@ -173,7 +180,7 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
 ;;   (node_type) @capture            captures the node under @capture
 ;;   (parent (child) @capture)       matches child inside parent
 ;;   (parent field: (child) @cap)    matches a named field `field'
-;;   [pat1 pat2] @capture            alternation — matches either pattern
+;;   [pat1 pat2] @capture: alternation: matches either pattern
 ;;   "#match?" predicate             applies a regex guard (rarely needed here)
 ;;
 ;; Each @capture name must correspond to a face variable (or be mapped via
@@ -183,7 +190,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
 (defvar picard-ts-mode--font-lock-settings
   (treesit-font-lock-rules
 
-   ;; ── Level 1 — Comments ─────────────────────────────────────────────
+   ;; Level 1: Comments
+   ;; =========================================================================
    ;; `noop' nodes represent $noop(...) blocks, which are the comment
    ;; mechanism in Picard Tagger Script.  They are styled so that they
    ;; are immediately distinguishable from executable code even at the
@@ -195,7 +203,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    :feature 'comment
    '((noop) @font-lock-comment-face)
 
-   ;; ── Level 2 — Keywords / Definitions ──────────────────────────────
+   ;; Level 2: Keywords / Definitions
+   ;; =========================================================================
    ;; Function names (the identifier between $ and the opening paren).
    ;; The query uses a *field access*: the grammar attaches the child
    ;; `function_name' to the `function_call' node under the named field
@@ -211,7 +220,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    '((function_call "$" @font-lock-function-call-face)
      (function_call name: (function_name) @font-lock-function-name-face))
 
-   ;; ── Level 2 — Variables ───────────────────────────────────────────
+   ;; Level 2: Variables
+   ;; =========================================================================
    ;; The `variable' node wraps the entire %varname% token.  Its child
    ;; `variable_name' holds the bare identifier.  Two captures are used:
    ;;
@@ -227,7 +237,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    '((variable (variable_name) @font-lock-variable-name-face)
      (variable "%" @font-lock-variable-name-face))
 
-   ;; ── Level 3 — Escape Sequences ────────────────────────────────────
+   ;; Level 3: Escape Sequences
+   ;; =========================================================================
    ;; Escape sequences (\n, \t, \uXXXX) deserve their own feature so that
    ;; users who want a clean view can suppress escape highlighting without
    ;; affecting string or variable colours.
@@ -236,7 +247,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    :override t
    '((escape_sequence) @font-lock-escape-face)
 
-   ;; ── Level 3 — Delimiters ──────────────────────────────────────────
+   ;; Level 3: Delimiters
+   ;; =========================================================================
    ;; Parentheses surrounding function arguments and commas separating them
    ;; are anonymous nodes in the grammar (matched by their literal text).
    ;; Applying bracket/delimiter faces helps readers track nesting depth.
@@ -246,7 +258,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
      (function_call ")" @font-lock-bracket-face)
      (function_call "," @font-lock-delimiter-face))
 
-   ;; ── Level 4 — Text / String Content ──────────────────────────────
+   ;; Level 4: Text / String Content
+   ;; =========================================================================
    ;; In Picard Script, any content that is not a function call, variable,
    ;; or escape sequence is raw text passed through verbatim.  This gets
    ;; the lowest priority decoration: it serves as the visual baseline,
@@ -268,10 +281,11 @@ Compiled by `treesit-font-lock-rules' into the internal representation
 expected by `treesit-font-lock-settings'.")
 
 
-;;;; ── Font-Lock Feature List ────────────────────────────────────────────────
+;;;; Font-Lock Feature List
+;; ==========================================================================
 
 ;; `treesit-font-lock-feature-list' controls *progressive decoration*:
-;; which features are enabled at each font-lock level (1–4, controlled by
+;; which features are enabled at each font-lock level (1-4, controlled by
 ;; `treesit-font-lock-level', default 3).
 ;;
 ;; The value is a list of lists.  Each inner list contains feature symbols
@@ -284,25 +298,26 @@ expected by `treesit-font-lock-settings'.")
 ;;   Level 4 → all features
 ;;
 ;; Convention (followed here and by all built-in ts-modes):
-;;   Level 1 — comment, definition       (always-on, minimum usability)
-;;   Level 2 — keyword, string, type     (standard highlighting)
-;;   Level 3 — operator, bracket, misc   (enhanced decoration)
-;;   Level 4 — everything else           (maximum detail)
+;;   Level 1: comment, definition (always-on, minimum usability)
+;;   Level 2: keyword, string, type (standard highlighting)
+;;   Level 3: operator, bracket, misc (enhanced decoration)
+;;   Level 4: everything else (maximum detail)
 
 (defvar picard-ts-mode--font-lock-feature-list
-  '(;; Level 1 — minimal: comments only
+  '(;;   Level 1: minimal: comments only
     (comment)
-    ;; Level 2 — standard: function names and variable identifiers
+    ;;   Level 2: standard: function names and variable identifiers
     (function variable)
-    ;; Level 3 — enhanced: escape sequences and structural delimiters
+    ;;   Level 3: enhanced: escape sequences and structural delimiters
     (escape-sequence delimiter)
-    ;; Level 4 — maximum: text/string content as lowest-priority decoration
+    ;;   Level 4: maximum: text/string content as lowest-priority decoration
     (string))
   "Feature list for `picard-ts-mode' progressive font-lock decoration.
 Assigned to `treesit-font-lock-feature-list' in the mode setup.")
 
 
-;;;; ── Indentation Rules ──────────────────────────────────────────────────────
+;;;; Indentation Rules
+;; ==========================================================================
 
 ;; `treesit-simple-indent-rules' describes indentation as a list of
 ;; *rule triples* of the form:
@@ -311,18 +326,18 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
 ;;
 ;; where:
 ;;
-;;   MATCHER  — a predicate function or a tree-sitter node type symbol
+;;   MATCHER: a predicate function or a tree-sitter node type symbol
 ;;              (or list of symbols) that identifies which lines these rules
 ;;              apply to.  The predicate receives three arguments:
 ;;              NODE, PARENT, BOL (beginning-of-line position).
 ;;
-;;   ANCHOR   — a function that returns the column reference point.
+;;   ANCHOR: a function that returns the column reference point.
 ;;              Common values from `treesit-simple-indent-presets':
-;;                `parent-bol'  — beginning of line containing parent node
-;;                `first-sibling' — start of first sibling
-;;                `prev-sibling'  — start of previous sibling
+;;                `parent-bol': beginning of line containing parent node
+;;                `first-sibling': start of first sibling
+;;                `prev-sibling': start of previous sibling
 ;;
-;;   OFFSET   — an integer (or variable) added to the anchor column.
+;;   OFFSET: an integer (or variable) added to the anchor column.
 ;;              Positive values indent right; negative values indent left.
 ;;
 ;; The rule list is tried in order; the first matching rule wins.
@@ -340,14 +355,15 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
 (defvar picard-ts-mode--indent-rules
   `((taggerscript
 
-     ;; ── Closing parenthesis alignment ─────────────────────────────
+     ;; Closing parenthesis alignment
+     ;; =========================================================================
      ;; When the cursor sits on a `)` that closes a function call, align
      ;; it with the column of the parent `function_call' node's first
      ;; character (i.e. the `$').  This produces:
      ;;
      ;;   $func(arg1,
      ;;         arg2
-     ;;   )                ← back-aligned with $func
+     ;;   )  <- back-aligned with $func
      ;;
      ;; `node-is' matches the current (innermost) node at BOL.
      ;; `parent-bol' returns the beginning-of-line position of the
@@ -355,13 +371,10 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
      ;; containing the opening `$funcname(`.
      ((node-is ")") parent-bol 0)
 
-     ;; ── Argument indentation ──────────────────────────────────────
-     ;; Arguments inside a function call are indented one tab stop
-     ;; relative to the function call's opening line.  This handles
-     ;; multi-line invocations such as:
-     ;;
+     ;; Argument indentation
+     ;; =========================================================================
      ;;   $if(condition,
-     ;;     value_if_true,    ← indented one level
+     ;;     value_if_true  <- indented one level
      ;;     value_if_false
      ;;   )
      ;;
@@ -371,19 +384,22 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
      ((parent-is "argument") parent-bol ,tab-width)
      ((parent-is "function_call") parent-bol ,tab-width)
 
-     ;; ── Noop / comment blocks ─────────────────────────────────────
+     ;; Noop / comment blocks
+     ;; =========================================================================
      ;; Content inside $noop(...) is treated as a comment and receives
      ;; no additional indentation.  Because noop can contain arbitrary
      ;; text (including line breaks), aligning its content with the
      ;; parent start (offset 0) preserves the author's formatting.
      ((parent-is "noop") parent-bol 0)
 
-     ;; ── Top-level fallback ────────────────────────────────────────
+     ;; Top-level fallback
+     ;; ====================================================================
      ;; Any node at the top level (parent is source_file) starts at
      ;; column 0.
      ((parent-is "source_file") parent-bol 0)
 
-     ;; ── Empty lines ───────────────────────────────────────────────
+     ;; Empty lines
+     ;; ====================================================================
      ;; When there is no node at BOL (blank line), do not change
      ;; indentation from whatever the user last set.
      (no-node parent-bol 0)))
@@ -393,7 +409,8 @@ Assigned to `treesit-simple-indent-rules'.  See the commentary above
 each rule group for a description of the matcher/anchor/offset semantics.")
 
 
-;;;; ── Defun Navigation ───────────────────────────────────────────────────────
+;;;; Defun Navigation
+;; ==========================================================================
 
 ;; `treesit-defun-type-regexp' tells Emacs which node types count as
 ;; "defuns" (top-level structural units) for the purposes of
@@ -416,7 +433,8 @@ in `picard-ts-mode'.  Matches both `function_call' and `noop' nodes so
 that both executable calls and comment blocks are navigable units.")
 
 
-;;;; ── Imenu Settings ─────────────────────────────────────────────────────────
+;;;; Imenu Settings
+;; ==========================================================================
 
 ;; `treesit-simple-imenu-settings' builds an Imenu index from tree-sitter
 ;; nodes, enabling M-x imenu (or the Imenu sidebar) to jump to named
@@ -427,10 +445,10 @@ that both executable calls and comment blocks are navigable units.")
 ;;   (CATEGORY-NAME NODE-TYPE-REGEXP PREDICATE FUNCTION)
 ;;
 ;; where:
-;;   CATEGORY-NAME   — string label shown as the Imenu category header
-;;   NODE-TYPE-REGEXP — regexp matching node types to index
-;;   PREDICATE        — optional function to further filter nodes (nil = none)
-;;   FUNCTION         — function to extract the display name from a node,
+;;   CATEGORY-NAME: string label shown as the Imenu category header
+;;   NODE-TYPE-REGEXP: regexp matching node types to index
+;;   PREDICATE: optional function to further filter nodes (nil = none)
+;;   FUNCTION: function to extract the display name from a node,
 ;;                      or nil to use the node's text directly
 ;;
 ;; Here, function_call nodes are indexed by extracting the text of their
@@ -453,7 +471,8 @@ nodes under the \"Functions\" category, using the function name as the
 display label.")
 
 
-;;;; ── Setup Function ─────────────────────────────────────────────────────────
+;;;; Setup Function
+;; ==========================================================================
 
 ;; All tree-sitter integration variables are buffer-local: they must be set
 ;; inside the mode body (or a function called from it) rather than at the
@@ -469,7 +488,8 @@ This function is called from `picard-ts-mode' only when
 `treesit-ready-p' confirms that the `taggerscript' grammar is loaded.
 It must not be called in any other context."
 
-  ;; ── Font-lock ────────────────────────────────────────────────────────
+  ;; Font-lock
+  ;; =========================================================================
   ;; `treesit-font-lock-settings' holds the compiled query objects produced
   ;; by `treesit-font-lock-rules'.  Assigning this variable (buffer-local)
   ;; tells the font-lock machinery which queries to run.
@@ -481,7 +501,8 @@ It must not be called in any other context."
   (setq-local treesit-font-lock-feature-list
               picard-ts-mode--font-lock-feature-list)
 
-  ;; ── Indentation ──────────────────────────────────────────────────────
+  ;; Indentation
+  ;; =========================================================================
   ;; `treesit-simple-indent-rules' is a list of (LANGUAGE . RULE-LIST)
   ;; pairs.  The rules are used by `treesit-indent' (the function bound to
   ;; TAB and <return> in tree-sitter modes) to determine the correct column.
@@ -494,15 +515,18 @@ It must not be called in any other context."
   (setq-local indent-tabs-mode t)
   (setq-local tab-width 2)
 
-  ;; ── Defun navigation ────────────────────────────────────────────────
+  ;; Defun navigation
+  ;; =========================================================================
   (setq-local treesit-defun-type-regexp
               picard-ts-mode--defun-type-regexp)
 
-  ;; ── Imenu ────────────────────────────────────────────────────────────
+  ;; Imenu
+  ;; =========================================================================
   (setq-local treesit-simple-imenu-settings
               picard-ts-mode--imenu-settings)
 
-  ;; ── Comment syntax ───────────────────────────────────────────────────
+  ;; Comment syntax
+  ;; =========================================================================
   ;; Picard Script has no line-comment syntax.  The $noop(...) block is the
   ;; closest equivalent, but it cannot be inserted with comment-dwim
   ;; directly.  Setting these variables to meaningful values allows
@@ -512,7 +536,8 @@ It must not be called in any other context."
   (setq-local comment-end ")")
   (setq-local comment-start-skip (rx "$noop("))
 
-  ;; ── Activate tree-sitter ─────────────────────────────────────────────
+  ;; Activate tree-sitter
+  ;; =========================================================================
   ;; `treesit-major-mode-setup' is the final step.  It reads all the
   ;; `treesit-*' buffer-local variables set above and wires them into
   ;; Emacs's font-lock, indentation, navigation, and Imenu subsystems.
@@ -520,7 +545,8 @@ It must not be called in any other context."
   (treesit-major-mode-setup))
 
 
-;;;; ── Mode Definition ────────────────────────────────────────────────────────
+;;;; Mode Definition
+;; ==========================================================================
 
 ;;;###autoload
 (define-derived-mode picard-ts-mode prog-mode "Picard[ts]"
@@ -539,9 +565,9 @@ and is automatically added to `treesit-language-source-alist' when this
 file is loaded.
 
 Keyboard bindings inherited from `prog-mode':
-  \\[beginning-of-defun] — move to start of enclosing function call
-  \\[end-of-defun]       — move to end of enclosing function call
-  \\[indent-for-tab-command] — indent current line via tree-sitter rules
+  \\[beginning-of-defun]: move to start of enclosing function call
+  \\[end-of-defun]: move to end of enclosing function call
+  \\[indent-for-tab-command]: indent current line via tree-sitter rules
 
 \\{picard-ts-mode-map}"
   :syntax-table picard-ts-mode--syntax-table
@@ -567,7 +593,8 @@ Keyboard bindings inherited from `prog-mode':
 (define-key picard-ts-mode-map (kbd "C-c C-d") #'picard-eldoc-show-all)
 
 
-;;;; ── Auto-mode Association ──────────────────────────────────────────────────
+;;;; Auto-mode Association
+;; ==========================================================================
 
 ;; Associate file extensions with this mode.  The `auto-mode-alist' entries
 ;; ensure that .picard and .pts files open in `picard-ts-mode' (or fall back
@@ -583,7 +610,8 @@ Keyboard bindings inherited from `prog-mode':
 (add-to-list 'auto-mode-alist '("\\.ptsp\\'" . picard-ts-mode))
 
 
-;;;; ── Transparent Upgrade via major-mode-remap-alist ────────────────────────
+;;;; Transparent Upgrade via major-mode-remap-alist
+;; ==========================================================================
 
 ;; `major-mode-remap-alist' (introduced in Emacs 29) allows a mode to
 ;; transparently redirect buffers that would open in one major mode to
@@ -605,7 +633,8 @@ Keyboard bindings inherited from `prog-mode':
   (add-to-list 'major-mode-remap-alist '(picard-mode . picard-ts-mode)))
 
 
-;;;; ── Grammar Installation Helper ──────────────────────────────────────────
+;;;; Grammar Installation Helper
+;; ==========================================================================
 
 (defun picard-ts-mode-install-grammar ()
   "Install the taggerscript Tree-sitter grammar for `picard-ts-mode'.
@@ -624,7 +653,8 @@ files to activate tree-sitter highlighting."
 Revert Picard Script buffers to activate tree-sitter mode."))
 
 
-;;;; ── Optional Feature Integration ──────────────────────────────────────────
+;;;; Optional Feature Integration
+;; ==========================================================================
 
 ;; Same extras pattern as picard-mode: load flymake, eldoc, and completion
 ;; when available.
@@ -638,7 +668,8 @@ Revert Picard Script buffers to activate tree-sitter mode."))
 (add-hook 'picard-ts-mode-hook #'picard--setup-builtin-variables)
 
 
-;;;; ── Provide ─────────────────────────────────────────────────────────────────
+;;;; Provide
+;; ==========================================================================
 
 (provide 'picard-ts-mode)
 

@@ -1,7 +1,7 @@
 ;;; picard-data.el --- Central data definitions for Picard Tagger Script support  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "27.1") (cl-lib "0.5"))
 ;; Keywords: languages, tools, picard, musicbrainz
 ;; URL: https://codeberg.org/useless-utils/picard-mode
@@ -16,25 +16,25 @@
 ;; (https://picard.musicbrainz.org/) to rename and tag audio files.  The
 ;; language has two main constructs:
 ;;
-;;   $function(arg1, arg2, ...)   — built-in function calls
-;;   %variable%                   — variable (tag) references
+;;   $function(arg1, arg2, ...): built-in function calls
+;;   %variable%: variable (tag) references
 ;;
 ;; This file defines:
 ;;
-;;   `picard-builtin-functions'  — alist of all 80 built-in functions with
-;;                                  metadata: min/max arity, category, docstring
-;;   `picard-builtin-tags'       — alist of all 159 built-in tags/variables with
-;;                                  metadata: category, docstring
+;;   `picard-builtin-functions': alist of all 80 built-in functions with
+;;                               metadata: min/max arity, category, docstring
+;;   `picard-builtin-tags': alist of all 159 built-in tags/variables with
+;;                          metadata: category, docstring
 ;;
 ;; and four helper functions for querying these databases:
 ;;
-;;   `picard-function-info'       — retrieve the plist for a function
-;;   `picard-tag-info'           — retrieve the plist for a tag or variable
-;;   `picard-function-names'     — list of all function names
-;;   `picard-tag-names'         — list of all tag names
-;;   `picard-data-conditional-functions' — functions with whitespace-sensitive args
-;;   `picard-function-conditional-arg-p' — is an argument position conditional?
-;;   `picard-function-args'     — named argument list for a function
+;;   `picard-function-info': retrieve the plist for a function
+;;   `picard-tag-info': retrieve the plist for a tag or variable
+;;   `picard-function-names': list of all function names
+;;   `picard-tag-names': list of all tag names
+;;   `picard-data-conditional-functions': functions with whitespace-sensitive args
+;;   `picard-function-conditional-arg-p': is an argument position conditional?
+;;   `picard-function-args': named argument list for a function
 ;;
 ;; Design note: max-args of -1 represents unlimited (variadic) arity.
 
@@ -830,7 +830,7 @@ MusicBrainz Picard 2.x scripting.")
         :doc "Primary MusicBrainz release group type (Album, Single, etc.)."))
     ("_rating"
      . (:category "hidden-variable"
-        :doc "MusicBrainz user rating of the recording (0–5)."))
+        :doc "MusicBrainz user rating of the recording (0-5)."))
     ("_recording_firstreleasedate"
      . (:category "hidden-variable"
         :doc "Date of the first known release of this recording."))

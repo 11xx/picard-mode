@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-taggerscript",
-  "version": "2026.04.08",
+  "version": "2026.4.10",
   "description": "Tree-sitter grammar for MusicBrainz Picard Tagger Script",
   "main": "bindings/node",
   "types": "bindings/node",
@@ -28,7 +28,7 @@
     "tree-sitter": "^0.21.0"
   },
   "peerDependenciesMeta": {
-    "tree_sitter": {
+    "tree-sitter": {
       "optional": true
     }
   },

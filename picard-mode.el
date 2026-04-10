@@ -1,7 +1,7 @@
 ;;; picard-mode.el --- MusicBrainz Picard Tagger Script mode -*- lexical-binding: t; -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, musicbrainz, picard, tagger
 ;; URL: https://codeberg.org/useless-utils/picard-mode
@@ -25,9 +25,9 @@
 ;;   argument    ::= (variable | function | argtext)*
 ;;
 ;; Special characters:
-;;   $       — starts a function call
-;;   %...%   — wraps a variable reference
-;;   \       — escape character (\$, \%, \(, \), \,, \\, \n, \t, \uXXXX)
+;;   $       : starts a function call
+;;   %...%   : wraps a variable reference
+;;   \       : escape character (\$, \%, \(, \), \,, \\, \n, \t, \uXXXX)
 ;;
 ;; The special function $noop(...) serves as the comment mechanism.
 ;; Everything inside $noop(), including nested function calls, is ignored
@@ -44,12 +44,14 @@
 
 ;;; Code:
 
-;;;; ─── Dependencies ───────────────────────────────────────────────────────────
+;;;; Dependencies
+;; ==========================================================================
 
 (require 'syntax)   ; For syntax-propertize machinery
 (require 'picard-core)
 
-;;;; ─── Customization Group ────────────────────────────────────────────────────
+;;;; Customization Group
+;; ==========================================================================
 
 (defgroup picard nil
   "Major mode for MusicBrainz Picard Tagger Script files."
@@ -62,11 +64,12 @@
 
 Picard scripts use tab-only indentation.  This value controls how many
 visual columns a single tab character occupies, which affects only display
-width — the actual indentation token is always a literal TAB character."
+width: the actual indentation token is always a literal TAB character."
   :type 'integer
   :group 'picard)
 
-;;;; ─── Syntax Table ───────────────────────────────────────────────────────────
+;;;; Syntax Table
+;; ==========================================================================
 
 ;; Design note on syntax-table entries:
 ;;
@@ -79,7 +82,7 @@ width — the actual indentation token is always a literal TAB character."
 
 (defvar picard-mode-syntax-table
   (let ((table (make-syntax-table)))
-    ;; Parentheses — Picard function arguments are wrapped in ( ... ).
+    ;; Parentheses: Picard function arguments are wrapped in ( ... ).
     ;; Assigning open/close paren syntax enables sexp-navigation commands
     ;; (forward-sexp, backward-sexp, show-paren-mode, etc.) to work on
     ;; function argument lists.
@@ -93,30 +96,30 @@ width — the actual indentation token is always a literal TAB character."
     ;; \( or \) as unbalanced parentheses.
     (modify-syntax-entry ?\\ "\\" table)
 
-    ;; Dollar sign — prefix/symbol constituent.
+    ;; Dollar sign: prefix/symbol constituent.
     ;; $ is the function-call sigil.  Treating it as a symbol constituent
     ;; means that $funcname forms a single symbol token, which simplifies
     ;; font-lock regexes and sexp navigation.
     (modify-syntax-entry ?$ "_" table)
 
-    ;; Percent sign — symbol constituent.
+    ;; Percent sign: symbol constituent.
     ;; % is the variable delimiter.  Like $, treating it as a symbol
     ;; constituent keeps %varname% in a single navigable unit.
     (modify-syntax-entry ?% "_" table)
 
-    ;; Comma — punctuation.
+    ;; Comma: punctuation.
     ;; In Picard, commas separate function arguments.  Marking them as
     ;; punctuation (rather than whitespace or symbol) provides correct
     ;; word-boundary behavior.
     (modify-syntax-entry ?, "." table)
 
-    ;; Underscore and colon — word/symbol constituents.
+    ;; Underscore and colon: word/symbol constituents.
     ;; Variable names may contain colons (e.g., %musicbrainz_trackid%).
     ;; Underscores are already word/symbol constituents by default in most
     ;; syntax tables, but colon needs explicit promotion.
     (modify-syntax-entry ?: "_" table)
 
-    ;; Double quote — punctuation, not a string delimiter.
+    ;; Double quote: punctuation, not a string delimiter.
     ;; Picard does not use prog-style string syntax, so treating " as
     ;; punctuation prevents Emacs from entering string state and incorrectly
     ;; spanning text between quotes.
@@ -127,17 +130,18 @@ width — the actual indentation token is always a literal TAB character."
 
 Designed around the Picard grammar: parentheses delimit function arguments,
 backslash is the escape character, and $ / % are symbol constituents rather
-than special characters.  No comment syntax is assigned here — comment
+than special characters.  No comment syntax is assigned here: comment
 regions are established dynamically by `picard--syntax-propertize' using
 text properties, which correctly handles the nested-parenthesis structure
 of $noop(...) blocks.")
 
-;;;; ─── Font-Lock Keywords ─────────────────────────────────────────────────────
+;;;; Font-Lock Keywords
+;; ==========================================================================
 
 ;; Design notes on font-lock choices:
 ;;
 ;; 1. Function names ($func): matched with font-lock-function-name-face.
-;;    The regex deliberately excludes $noop — noop blocks are handled as
+;;    The regex deliberately excludes $noop: noop blocks are handled as
 ;;    comments by syntax-propertize, not as highlighted function calls.
 ;;    Using a negative lookahead (?!noop) keeps font-lock and syntax
 ;;    properties consistent: if Emacs already marks a region as a comment,
@@ -173,7 +177,8 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
 
 (defconst picard-font-lock-keywords
   `(
-    ;; ── Escape sequences ────────────────────────────────────────────────
+    ;; Escape sequences
+    ;; ====================================================================
     ;; Must come first so that \$ and \% are highlighted as escapes and not
     ;; as the start of a function call or variable reference.
     ;; Matches: \n \t \\ \$ \% \( \) \, and \uXXXX (Unicode escapes)
@@ -181,7 +186,8 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
               (seq "\\u" (repeat 4 (any hex-digit)))))
      (0 'font-lock-escape-face))
 
-    ;; ── Function names ($funcname) ───────────────────────────────────────
+    ;; Function names ($funcname)
+    ;; ====================================================================
     ;; Matches $identifier but not $noop.  The regex matches any $-prefixed
     ;; name; the `when' guard then suppresses highlighting when the match is
     ;; exactly "$noop" (using string-equal for an exact match, not a prefix
@@ -193,20 +199,23 @@ On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
      (0 (when (not (string-equal (match-string 0) "$noop"))
           'font-lock-function-name-face)))
 
-    ;; ── Variable references (%varname%) ─────────────────────────────────
+    ;; Variable references (%varname%)
+    ;; ====================================================================
     ;; Per the grammar: identifier  ::= [a-zA-Z0-9_]
     ;;                  variable    ::= '%' (identifier | ':')+ '%'
     ;; The colon is also permitted (used in some special variables).
     (,(rx "%" (one-or-more (any alnum "_:")) "%")
      (0 'font-lock-variable-name-face))
 
-    ;; ── Argument-separator commas ────────────────────────────────────────
+    ;; Argument-separator commas
+    ;; ====================================================================
     ;; Commas that are not escaped (\, is a literal comma in Picard output).
     ;; The escape sequence rule above already claims \, matches, so only bare
     ;; commas remain for this pattern.  A simple one-character match suffices.
     ("," (0 picard--font-lock-delimiter-face))
 
-    ;; ── $noop opening sigil ─────────────────────────────────────────────
+    ;; $noop opening sigil
+    ;; ====================================================================
     ;; Opening of comment function.
     (,(rx "$noop")
      (0 'font-lock-comment-face prepend)))
@@ -216,7 +225,8 @@ Entries are ordered so that escape sequences take priority over function-call
 and variable-reference patterns, preventing \\$ and \\% from being
 misidentified.")
 
-;;;; ─── Syntax Propertize: $noop Comment Detection ────────────────────────────
+;;;; Syntax Propertize: $noop Comment Detection
+;; ==========================================================================
 
 ;; Design rationale for syntax-propertize-function:
 ;;
@@ -306,7 +316,8 @@ a buffer region needs its syntax properties refreshed (e.g., after edits)."
            (t
             (forward-char 1))))))))
 
-;;;; ─── Indentation ────────────────────────────────────────────────────────────
+;;;; Indentation
+;; ==========================================================================
 
 ;; Design rationale for indentation:
 ;;
@@ -389,7 +400,8 @@ This function is assigned to `indent-line-function' in `picard-mode'."
       (beginning-of-line)
       (forward-char indent-level))))
 
-;;;; ─── Keymap ─────────────────────────────────────────────────────────────────
+;;;; Keymap
+;; ==========================================================================
 
 (defvar picard-mode-map
   (let ((map (make-sparse-keymap)))
@@ -409,7 +421,8 @@ and `picard-indent-line' respectively.")
 ;; Show combined Eldoc help for the thing at point.
 (define-key picard-mode-map (kbd "C-c C-d") #'picard-eldoc-show-all)
 
-;;;; ─── Mode Definition ────────────────────────────────────────────────────────
+;;;; Mode Definition
+;; ==========================================================================
 
 ;;;###autoload
 (define-derived-mode picard-mode prog-mode "Picard"
@@ -419,10 +432,10 @@ Picard Tagger Script is used within the MusicBrainz Picard audio tagger
 to define file renaming patterns and tag transformations.
 
 Syntax overview:
-  $function(arg1,arg2)  — function call
-  %variable%            — variable reference
-  $noop(comment text)   — comment (everything inside is ignored)
-  \\$  \\%  \\(  \\)    — escaped special characters
+  $function(arg1,arg2)  : function call
+  %variable%            : variable reference
+  $noop(comment text)   : comment (everything inside is ignored)
+  \\$  \\%  \\(  \\)    : escaped special characters
 
 Indentation uses TAB characters only (never spaces).  Each nesting level
 inside parentheses adds one TAB.  `electric-indent-mode' is disabled
@@ -430,30 +443,34 @@ locally to prevent accidental space insertion.
 
 See also: `picard-tab-width', `picard-indent-line'."
 
-  ;; ── Syntax table ──────────────────────────────────────────────────────
+  ;; Syntax table
+  ;; =========================================================================
   ;; `define-derived-mode' automatically installs the table named
   ;; `picard-mode-syntax-table' (defined above) as the buffer-local syntax
   ;; table.
 
-  ;; ── Font-lock ──────────────────────────────────────────────────────────
+  ;; Font-lock
+  ;; =========================================================================
   (setq-local font-lock-defaults
               '(picard-font-lock-keywords
                 nil   ; KEYWORDS-ONLY: nil means syntactic fontification
-                      ;   (strings, comments) is also performed, which is
-                      ;   needed to render $noop blocks as comments.
+                                        ;   (strings, comments) is also performed, which is
+                                        ;   needed to render $noop blocks as comments.
                 nil   ; CASE-FOLD: nil means case-sensitive matching.
                 nil   ; SYNTAX-ALIST: no additional syntax modifications.
                 nil)) ; SYNTAX-BEGIN: nil = use font-lock defaults.
 
-  ;; ── Syntax propertize ─────────────────────────────────────────────────
+  ;; Syntax propertize
+  ;; =========================================================================
   ;; Assign the $noop-detection function.  Emacs calls this before each
   ;; font-lock pass over a region, ensuring comment properties are up to
   ;; date before the font engine runs.
   (setq-local syntax-propertize-function #'picard--syntax-propertize)
 
-  ;; ── Indentation ────────────────────────────────────────────────────────
+  ;; Indentation
+  ;; =========================================================================
   (setq-local indent-line-function #'picard-indent-line)
-  ;; Tab-only indentation — tabs are inserted, never spaces.
+  ;; Tab-only indentation: tabs are inserted, never spaces.
   (setq-local indent-tabs-mode t)
   (setq-local tab-width picard-tab-width)
   ;; Disable electric-indent-mode locally.  This mode inserts spaces
@@ -462,7 +479,8 @@ See also: `picard-tab-width', `picard-indent-line'."
   ;; Picard output strings.
   (electric-indent-local-mode -1)
 
-  ;; ── Comment configuration ──────────────────────────────────────────────
+  ;; Comment configuration
+  ;; =========================================================================
   ;; These variables teach Emacs' universal comment commands (comment-dwim,
   ;; comment-region, uncomment-region) about Picard's comment syntax.
   ;;
@@ -484,18 +502,20 @@ See also: `picard-tab-width', `picard-indent-line'."
   ;; idiomatic form.
   (setq-local comment-padding "")
 
-  ;; ── Parse-sexp integration ────────────────────────────────────────────
+  ;; Parse-sexp integration
+  ;; =========================================================================
   ;; Inform parse-sexp that comments exist and that it should use the
   ;; syntax-table text properties set by picard--syntax-propertize.
   (setq-local parse-sexp-ignore-comments t)
   (setq-local parse-sexp-lookup-properties t))
 
-;;;; ─── Auto-mode-alist Registration ──────────────────────────────────────────
+;;;; Auto-mode-alist Registration
+;; ==========================================================================
 
 ;; Associate file extensions .picard and .pts with picard-mode.
 ;;
-;; .picard — the conventional extension for standalone Picard script files.
-;; .pts    — short for "Picard Tagger Script", sometimes used in the
+;; .picard: the conventional extension for standalone Picard script files.
+;; .pts: short for "Picard Tagger Script", sometimes used in the
 ;;           community for script files shared outside the Picard GUI.
 ;;
 ;; The ###autoload cookie ensures these associations are registered without
@@ -512,7 +532,8 @@ See also: `picard-tab-width', `picard-indent-line'."
 (add-to-list 'auto-mode-alist '("\\.ptsp\\'" . picard-mode))
 
 
-;;;; ─── Optional Feature Integration ──────────────────────────────────────────
+;;;; Optional Feature Integration
+;; ==========================================================================
 
 ;; Load flymake, eldoc, and completion support when the corresponding
 ;; packages are available.  Each feature file provides a `-setup' function
@@ -531,7 +552,8 @@ if the corresponding file is absent, that feature is simply skipped."
 (add-hook 'picard-mode-hook #'picard--setup-builtin-variables)
 
 
-;;;; ─── Provide ────────────────────────────────────────────────────────────────
+;;;; Provide
+;; ==========================================================================
 
 (provide 'picard-mode)
 

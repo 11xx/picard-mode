@@ -1,7 +1,7 @@
 ;;; picard-eldoc.el --- Eldoc support for Picard Tagger Script  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, eldoc
 ;; URL: https://codeberg.org/useless-utils/picard-mode
@@ -23,24 +23,24 @@
 ;; -----------------
 ;; Two contexts are recognised:
 ;;
-;;   Function call — point is inside `$funcname(...)'.
+;;   Function call: point is inside `$funcname(...)'.
 ;;     Detected by searching backward for `$name(' and forward for the
 ;;     matching `)'.  The current argument index is determined by counting
 ;;     unbalanced commas between the opening paren and point.
 ;;
-;;   Variable reference — point is inside `%varname%'.
+;;   Variable reference: point is inside `%varname%'.
 ;;     Detected by checking whether the count of `%' characters between
 ;;     line start and point is odd (meaning point is inside a variable).
 ;;
 ;; Signature formatting
 ;; --------------------
 ;; Functions:
-;;   $if(condition, then[, else]) — conditional: If condition is non-empty…
+;;   $if(condition, then[, else]): conditional: If condition is non-empty...
 ;;
 ;; Variables:
-;;   %artist% — basic-tag: The primary artist of the recording.
+;;   %artist%: basic-tag: The primary artist of the recording.
 ;;
-;; Argument names are synthetic — they are generated from the parameter
+;; Argument names are synthetic: they are generated from the parameter
 ;; index and the function's category when no named parameter list is
 ;; available.
 ;;
@@ -89,7 +89,7 @@ non-nil, is the zero-based index of the argument at point; that argument
 will be visually indicated as the current argument.
 
 The format is:
-  $funcname(req1, req2[, opt1]) — category: docstring"
+  $funcname(req1, req2[, opt1]): category: docstring"
   (let* ((min-args (plist-get info :min-args))
          (max-args (plist-get info :max-args))
          (category (plist-get info :category))
@@ -143,7 +143,7 @@ The format is:
      ;; Pure variadic (min-args = 0, max-args = -1).
      ((= min-args 0)
       (setq args (list "[...]"))))
-    (format "%s(%s) — %s: %s"
+    (format "%s(%s): %s: %s"
             func-name
             (mapconcat #'identity args ", ")
             category
@@ -163,7 +163,7 @@ FUNC-NAME, falls back to `picard--generic-arg-names'."
       (nth index picard--generic-arg-names)
       (format "arg%d" (1+ index))))
 
-;;;; Context detection — traditional (regex) path
+;;;; Context detection: traditional (regex) path
 
 (defun picard-eldoc--function-context-traditional ()
   "Return context information when point is inside a Picard function call.
@@ -251,7 +251,7 @@ Returns nil when point is not inside any variable reference."
             (list :name var-name
                   :info (picard-tag-info var-name))))))))
 
-;;;; Context detection — tree-sitter path
+;;;; Context detection: tree-sitter path
 
 (defun picard-eldoc--treesit-available-p ()
   "Return non-nil when tree-sitter is available and active in the buffer."
@@ -373,7 +373,7 @@ the result string is passed to it; otherwise it is returned directly."
                    (info (plist-get var-ctx :info))
                    (cat  (if info (plist-get info :category) "unknown"))
                    (doc  (if info (plist-get info :doc) "User-defined variable.")))
-              (format "%%%s%% — %s: %s"
+              (format "%%%s%%: %s: %s"
                       name cat doc)))))
     (if cb
         (when doc-string

@@ -1,7 +1,16 @@
+;;; picard-core.el --- Shared code for Picard Tagger Script support  -*- lexical-binding: t; -*-
+
+;; Author: 11xx
+;; Version: 2026.4.10
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: languages, picard, musicbrainz
+;; URL: https://codeberg.org/useless-utils/picard-mode
+
 (require 'cl-lib)
 (require 'picard-data nil 'noerror)
 
-;;;; ─── Builtin Variable Highlighting ──────────────────────────────────────────
+;;;; Builtin Variable Highlighting
+;; ==========================================================================
 
 ;; Picard variables are wrapped in % delimiters (%artist%, %_filename%, etc.).
 ;; The base font-lock pass applies a uniform face to all of them.  This

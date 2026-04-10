@@ -1,7 +1,7 @@
 ;;; picard-flymake.el --- Flymake backend for Picard Tagger Script  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, flymake
 ;; URL: https://codeberg.org/useless-utils/picard-mode
@@ -21,11 +21,11 @@
 ;; The backend operates in two modes depending on whether tree-sitter is
 ;; available for the current buffer:
 ;;
-;;   Tree-sitter mode  — walks the syntax tree for `function_call' nodes,
-;;                       extracts the function name and counts `argument'
-;;                       children, then validates against the database.
+;;   Tree-sitter mode: walks the syntax tree for `function_call' nodes,
+;;                     extracts the function name and counts `argument'
+;;                     children, then validates against the database.
 ;;
-;;   Traditional mode  — uses regular expressions to locate `$name(' patterns,
+;;   Traditional mode: uses regular expressions to locate `$name(' patterns,
 ;;                       then counts commas at the same parenthesis nesting
 ;;                       depth to infer argument count.
 ;;
@@ -35,9 +35,9 @@
 ;;
 ;; Diagnostic severity mapping
 ;; ---------------------------
-;;   :error    — call to an unknown function name
-;;   :warning  — call with wrong number of arguments (too few or too many)
-;;   :note     — unmatched delimiter (`%' or parenthesis)
+;;   :error: call to an unknown function name
+;;   :warning: call with wrong number of arguments (too few or too many)
+;;   :note: unmatched delimiter (`%' or parenthesis)
 ;;
 ;; Setup
 ;; -----
@@ -149,7 +149,7 @@ arguments, and reports arity violations."
                      :error
                      (format "Unknown Picard function: %s" func-name))
                     diags))
-             ;; Known function — validate arity.
+             ;; Known function: validate arity.
              (t
               (let* ((n-args   (picard-flymake--count-args-traditional paren-pos))
                      (min-args (plist-get info :min-args))
@@ -251,15 +251,15 @@ last open paren."
 ;;;; Whitespace-in-conditional-argument check
 
 ;; Picard Script evaluates function arguments as strings.  Any characters
-;; that appear literally in the source — including leading spaces — become
+;; that appear literally in the source: including leading spaces: become
 ;; part of the evaluated string.  This is a frequent source of mistakes when
 ;; authors indent multi-line $if / $if2 / $and / $or / $not calls with spaces
 ;; rather than tabs:
 ;;
 ;;   $if(
-;;     %artist%,        ← the two leading spaces are part of the condition
-;;     great,           ← and these spaces are part of the "then" value
-;;     bad              ← and here
+;;     %artist%  <- the two leading spaces are part of the condition
+;;     great     <- and these spaces are part of the "then" value
+;;     bad       <- and here
 ;;   )
 ;;
 ;; The Picard runtime passes those leading spaces verbatim to the function,
@@ -447,13 +447,13 @@ registered in `flymake-diagnostic-functions' by `picard-flymake-setup'.
 
 Diagnostics are produced by three complementary analyses:
 
-  1. Function-call validation — checks unknown names and arity violations.
+  1. Function-call validation: checks unknown names and arity violations.
      Tree-sitter is preferred; regex scanning is used as fallback.
 
-  2. Delimiter balance checking — finds unmatched `%' signs and parentheses.
+  2. Delimiter balance checking: finds unmatched `%' signs and parentheses.
      This scan is always performed, regardless of tree-sitter availability.
 
-  3. Whitespace-in-conditional-argument checking — warns when a conditional
+  3. Whitespace-in-conditional-argument checking: warns when a conditional
      function (`$if', `$if2', `$and', `$or', `$not') has significant spaces
      in a condition position.  Leading and trailing spaces become part of the
      evaluated string and can change truthiness in non-obvious ways.

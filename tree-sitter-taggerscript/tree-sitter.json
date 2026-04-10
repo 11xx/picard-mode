@@ -16,7 +16,7 @@
     }
   ],
   "metadata": {
-    "version": "2026.04.08",
+    "version": "2026.4.10",
     "license": "UNLICENSE",
     "description": "Tree-sitter grammar for MusicBrainz Picard Tagger Script",
     "authors": [

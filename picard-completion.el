@@ -1,7 +1,7 @@
 ;;; picard-completion.el --- Completion-at-point for Picard Tagger Script  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.04.10
+;; Version: 2026.4.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, completion
 ;; URL: https://codeberg.org/useless-utils/picard-mode
@@ -20,18 +20,18 @@
 ;;   (START END TABLE . PROPERTIES)
 ;;
 ;; where:
-;;   START      — buffer position of the start of the completion region.
-;;   END        — buffer position of the end of the completion region.
-;;   TABLE      — a completion table: a list, hash table, or function.
-;;   PROPERTIES — a plist of metadata accepted by `completion-at-point'.
+;;   START: buffer position of the start of the completion region.
+;;   END: buffer position of the end of the completion region.
+;;   TABLE: a completion table: a list, hash table, or function.
+;;   PROPERTIES: a plist of metadata accepted by `completion-at-point'.
 ;;
 ;; Common properties:
-;;   :annotation-function  — called with each candidate to produce the
-;;                           annotation string shown in the *Completions* buffer
-;;                           and in Company/Corfu popups.
-;;   :company-kind         — used by Company.el to choose an icon (optional).
-;;   :exclusive            — when `yes', prevents other CAPF functions from
-;;                           running if this one returned a result.
+;;   :annotation-function: called with each candidate to produce the
+;;                        annotation string shown in the *Completions* buffer
+;;                        and in Company/Corfu popups.
+;;   :company-kind: used by Company.el to choose an icon (optional).
+;;   :exclusive: when `yes', prevents other CAPF functions from
+;;               running if this one returned a result.
 ;;
 ;; If the function cannot complete at point it must return nil so the next
 ;; function on the hook gets a chance.
@@ -40,14 +40,14 @@
 ;; -----------------
 ;; Two contexts trigger completion:
 ;;
-;;   After `$'   — complete function names.  The region extends from the `$'
-;;                 (or from one character after it) to point.  Candidates are
-;;                 taken from `picard-function-names'.  Annotations show the
-;;                 functional category and arity summary.
+;;   After `$': complete function names. The region extends from the `$'
+;;             (or from one character after it) to point. Candidates are
+;;             taken from `picard-function-names'. Annotations show the
+;;             functional category and arity summary.
 ;;
-;;   Inside `%…%' — complete variable/tag names.  The region extends from the
-;;                  character after the opening `%' to point.  Candidates are
-;;                  taken from `picard-tag-names'.  Annotations show the
+;;   Inside `%...%': complete variable/tag names. The region extends from the
+;;                  character after the opening `%' to point. Candidates are
+;;                  taken from `picard-tag-names'. Annotations show the
 ;;                  category (basic-tag or hidden-variable).
 ;;
 ;; Annotation format
@@ -76,10 +76,10 @@
 CANDIDATE is a string like \"$if\".  The annotation summarises the
 functional category and accepted arity, formatted as:
 
-  [conditional 2..3]   — fixed range
-  [mathematical 2+]    — variadic (min-args or more)
-  [miscellaneous 0+]   — variadic with zero required args
-  [information 0]      — exactly zero args"
+  [conditional 2..3]: fixed range
+  [mathematical 2+]: variadic (min-args or more)
+  [miscellaneous 0+]: variadic with zero required args
+  [information 0]: exactly zero args"
   (let ((info (picard-function-info candidate)))
     (if (null info)
         ""
