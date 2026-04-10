@@ -460,7 +460,10 @@ Diagnostics are produced by three complementary analyses:
 
 See `picard-flymake--scan-treesit', `picard-flymake--scan-traditional',
 `picard-flymake--scan-delimiter-balance', and
-`picard-flymake--scan-whitespace-args' for implementation details."
+`picard-flymake--scan-whitespace-args' for implementation details.
+
+The function `picard-data-conditional-functions' supplies the list of
+functions whose arguments are checked for significant whitespace."
   (let* ((buffer (current-buffer))
          ;; Choose function-call validation strategy based on tree-sitter
          ;; availability.  Tree-sitter is preferred because it provides exact

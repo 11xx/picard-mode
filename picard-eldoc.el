@@ -17,7 +17,7 @@
 ;; called with an optional callback argument CB; when CB is non-nil the
 ;; result must be passed to it; when CB is nil the result is returned
 ;; directly.  This file follows the newer multi-source protocol introduced
-;; in Emacs 28 (see `(info "(emacs) Eldoc")').
+;; in Emacs 28 (see the Eldoc chapter in the Emacs manual).
 ;;
 ;; Context detection
 ;; -----------------
@@ -86,7 +86,7 @@ this list are used.")
 
 INFO is the plist from `picard-function-info'.  CURRENT-ARG, when
 non-nil, is the zero-based index of the argument at point; that argument
-will be highlighted with the `eldoc-highlight-function-argument' face.
+will be visually indicated as the current argument.
 
 The format is:
   $funcname(req1, req2[, opt1]) — category: docstring"
@@ -335,6 +335,9 @@ with :name and :info keys, or nil."
 (defun picard-eldoc--function-doc (cb &rest _ignored)
   "Return Eldoc documentation for a Picard function call at point.
 
+Uses `picard-eldoc--function-context-treesit' when tree-sitter is
+available, otherwise `picard-eldoc--function-context-traditional'.
+
 CB is the callback supplied by Eldoc (Emacs 28+).  When CB is non-nil
 the result string is passed to it; otherwise it is returned directly."
   (let* ((func-ctx
@@ -354,6 +357,9 @@ the result string is passed to it; otherwise it is returned directly."
 
 (defun picard-eldoc--variable-doc (cb &rest _ignored)
   "Return Eldoc documentation for a Picard variable at point.
+
+Uses `picard-eldoc--variable-context-treesit' when tree-sitter is
+available, otherwise `picard-eldoc--variable-context-traditional'.
 
 CB is the callback supplied by Eldoc (Emacs 28+).  When CB is non-nil
 the result string is passed to it; otherwise it is returned directly."

@@ -184,10 +184,10 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
   (treesit-font-lock-rules
 
    ;; ── Level 1 — Comments ─────────────────────────────────────────────
-   ;; `noop' nodes represent $noop(...) blocks, which are the comment
-   ;; mechanism in Picard Tagger Script.  They receive `comment-face' so
-   ;; that they are immediately distinguishable from executable code even
-   ;; at the lowest decoration level.
+;; `noop' nodes represent $noop(...) blocks, which are the comment
+    ;; mechanism in Picard Tagger Script.  They are styled so that they
+    ;; are immediately distinguishable from executable code even at the
+    ;; lowest decoration level.
    ;;
    ;; The :feature is named `comment' following the convention used across
    ;; all built-in ts-modes (c-ts-mode, python-ts-mode, etc.).
@@ -204,8 +204,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    ;; positions (unlikely here, but good practice).
    ;;
    ;; The `$' sigil is an anonymous node within `function_call'.  It
-   ;; receives `font-lock-keyword-face' to visually distinguish the call
-   ;; prefix from the function name itself.
+;; receives distinctive styling to visually distinguish the call
+    ;; prefix from the function name itself.
    :language 'taggerscript
    :feature 'function
    '((function_call "$" @font-lock-function-call-face)
@@ -214,18 +214,18 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
    ;; ── Level 2 — Variables ───────────────────────────────────────────
    ;; The `variable' node wraps the entire %varname% token.  Its child
    ;; `variable_name' holds the bare identifier.  Two captures are used:
-   ;;
-   ;;   @font-lock-variable-use-face  — applied to the name itself
-   ;;   @font-lock-bracket-face       — applied to the % delimiters
-   ;;
+;;
+    ;;   both the bare identifier and the surrounding % signs receive
+    ;;   the variable-name face, so the entire %varname% token is
+    ;;   visually unified as a single syntactic unit.
    ;; The alternation [...] captures both the opening and closing percent
    ;; signs as anonymous string literals in the grammar.  Anonymous nodes
    ;; are matched by their literal text in double quotes.
-   :language 'taggerscript
-   :feature 'variable
-   :override t
-   '((variable (variable_name) @font-lock-variable-name-face)
-     (variable "%" @font-lock-variable-name-face))
+:language 'taggerscript
+    :feature 'variable
+    :override t
+    '((variable (variable_name) @font-lock-variable-name-face)
+      (variable "%" @font-lock-variable-name-face))
 
    ;; ── Level 3 — Escape Sequences ────────────────────────────────────
    ;; Escape sequences (\n, \t, \uXXXX) deserve their own feature so that
@@ -247,11 +247,11 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
      (function_call "," @font-lock-delimiter-face))
 
    ;; ── Level 4 — Text / String Content ──────────────────────────────
-   ;; In Picard Script, any content that is not a function call, variable,
-   ;; or escape sequence is raw text passed through verbatim.  Applying
-   ;; `string-face' (the lowest priority, overridable by all of the above)
-   ;; gives the buffer a clear visual baseline: everything that *looks* like
-   ;; data rather than code is rendered distinctly.
+;; In Picard Script, any content that is not a function call, variable,
+    ;; or escape sequence is raw text passed through verbatim.  This gets
+    ;; the lowest priority decoration: it serves as the visual baseline,
+    ;; distinctly rendered so that everything that looks like data rather
+    ;; than code is immediately apparent.
    ;;
    ;; :override is set to `keep' rather than the default nil so that text
    ;; nodes that overlap with other features (e.g. text inside an argument

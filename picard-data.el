@@ -26,7 +26,15 @@
 ;;   `picard-builtin-tags'       — alist of all 159 built-in tags/variables with
 ;;                                  metadata: category, docstring
 ;;
-;; and four helper functions for querying these databases.
+;; and four helper functions for querying these databases:
+;;
+;;   `picard-function-info'       — retrieve the plist for a function
+;;   `picard-tag-info'           — retrieve the plist for a tag or variable
+;;   `picard-function-names'     — list of all function names
+;;   `picard-tag-names'         — list of all tag names
+;;   `picard-data-conditional-functions' — functions with whitespace-sensitive args
+;;   `picard-function-conditional-arg-p' — is an argument position conditional?
+;;   `picard-function-args'     — named argument list for a function
 ;;
 ;; Design note: max-args of -1 represents unlimited (variadic) arity.
 
@@ -937,11 +945,14 @@ written to the audio file.")
 ;;;; Helper functions
 
 (defun picard-function-info (name)
-  "Return the property list for the Picard function NAME, or nil if unknown.
+"Return the property list for the Picard function NAME, or nil if unknown.
 
 NAME should be a string including the leading dollar sign, e.g. \"$if\".
-The returned plist contains :min-args, :max-args, :category, :conditional-args,
-:args, and :doc keys."
+The returned plist contains :min-args, :max-args, :category,
+:conditional-args, :args, and :doc keys.
+
+See also `picard-function-conditional-arg-p' and `picard-function-args'
+for convenient accessors to the :conditional-args and :args fields."
   (cdr (assoc name picard-builtin-functions)))
 
 (defun picard-tag-info (name)

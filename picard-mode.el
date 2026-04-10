@@ -422,18 +422,11 @@ Syntax overview:
   $function(arg1,arg2)  — function call
   %variable%            — variable reference
   $noop(comment text)   — comment (everything inside is ignored)
-  \\$  \\%  \\(  \\)       — escaped special characters
+  \\$  \\%  \\(  \\)    — escaped special characters
 
 Indentation uses TAB characters only (never spaces).  Each nesting level
 inside parentheses adds one TAB.  `electric-indent-mode' is disabled
 locally to prevent accidental space insertion.
-
-Font-lock highlights:
-  • Function names   → `font-lock-function-name-face'
-  • Variable names   → `font-lock-variable-name-face'
-  • Escape sequences → `font-lock-escape-face'
-  • Commas           → `font-lock-delimiter-face' (Emacs 29+)
-  • $noop blocks     → `font-lock-comment-face' (via syntax-propertize)
 
 See also: `picard-tab-width', `picard-indent-line'."
 

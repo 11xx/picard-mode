@@ -4,17 +4,17 @@
 ;;;; ─── Builtin Variable Highlighting ──────────────────────────────────────────
 
 ;; Picard variables are wrapped in % delimiters (%artist%, %_filename%, etc.).
-;; The base font-lock pass applies `font-lock-variable-name-face' to all of
-;; them uniformly.  This section adds a second layer that distinguishes:
+;; The base font-lock pass applies a uniform face to all of them.  This
+;; section adds a second layer that distinguishes:
 ;;
 ;;   - Well-known read/write tags (e.g. %artist%, %title%)
-;;     highlighted with `font-lock-constant-face'.
+;;     receive distinctive highlighting to set them apart.
 ;;
 ;;   - Hidden read-only internal variables (e.g. %_filename%, %_bitrate%)
-;;     highlighted with `font-lock-type-face'.
+;;     receive a different style to indicate they are internal.
 ;;
-;; Tags not present in `picard-builtin-tags' remain as
-;; `font-lock-variable-name-face', clearly marking user-defined variables.
+;; Tags not present in `picard-builtin-tags' retain the base face,
+;; clearly marking them as user-defined variables.
 
 (defun picard--add-builtin-variable-keywords ()
   "Register font-lock rules that highlight known Picard builtin tag variables.
@@ -22,10 +22,10 @@
 Requires `picard-data'.  When available, partitions the full tag list into
 visible tags (no leading underscore) and hidden internal variables (leading
 underscore), then adds keyword patterns to the current buffer that apply
-distinct faces to each group, overriding any face already applied.
+distinct styling to each group, overriding any face already applied.
 
-Visible builtin tags  → `font-lock-constant-face'
-Hidden internal vars  → `font-lock-type-face'
+Visible builtin tags  → one style
+Hidden internal vars → another style
 
 Intended to be called from a major-mode hook, not interactively."
   (let* ((all-tags   (picard-tag-names))
