@@ -423,15 +423,28 @@ function context is active."
       (apply #'picard-eldoc--variable-doc cb _ignored)))
 
 (defun picard-eldoc-show-all ()
-  "Show all Picard Eldoc docs available at point.
+  "Show all Picard docs and Flymake diagnostics available at point.
 
-This command uses a dedicated help buffer so function and variable help
-can be viewed together when both apply."
+Displays function documentation, variable documentation, and any Flymake
+diagnostics (errors, warnings, notes) in effect at the current position.
+Uses a dedicated help buffer so all information is visible at once."
   (interactive)
   (let ((function-doc (picard-eldoc--function-doc nil))
-        (variable-doc (picard-eldoc--variable-doc nil)))
+        (variable-doc (picard-eldoc--variable-doc nil))
+        (flymake-diags
+         (when (and (boundp 'flymake-mode) flymake-mode)
+           (cl-loop for diag in (flymake-diagnostics (point) nil nil)
+                    for text = (flymake-diagnostic-text diag)
+                    when text
+                    collect (cons (symbol-name (flymake-diagnostic-type diag))
+                                 text)))))
     (with-help-window (help-buffer)
       (princ "Picard documentation at point\n\n")
+      (when flymake-diags
+        (princ "Flymake diagnostics:\n")
+        (dolist (diag flymake-diags)
+          (princ (format "  [%s] %s\n" (car diag) (cdr diag))))
+        (princ "\n"))
       (cond
        ((and function-doc variable-doc)
         (princ "Function:\n")

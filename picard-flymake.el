@@ -436,17 +436,15 @@ at least one parser, meaning the current buffer has a live tree."
 (defun picard-flymake--scan-treesit (buffer)
   "Scan BUFFER using the tree-sitter syntax tree and return diagnostics.
 
-Walks every `function_call' node in the tree.  For each call:
-  1. Extracts the text of the `function_name' child node.
-  2. Counts `argument' child nodes.
-  3. Validates name and arity against `picard-builtin-functions'.
+  Walks every `function_call' node in the tree.  For each call:
+    1. Extracts the text of the `name' child node.
+    2. Counts `argument' child nodes.
+    3. Validates name and arity against `picard-builtin-functions'.
 
-Returns a list of `flymake-diagnostic' objects."
+  Returns a list of `flymake-diagnostic' objects."
   (with-current-buffer buffer
     (let ((diags '()))
       (when (picard-flymake--treesit-available-p)
-        ;; `treesit-query-capture' returns an alist of (NODE-TYPE . NODE).
-        ;; The query matches any `function_call' node in the tree.
         (condition-case _err
             (let ((captures
                    (treesit-query-capture
@@ -455,16 +453,15 @@ Returns a list of `flymake-diagnostic' objects."
               (dolist (capture captures)
                 (let* ((call-node  (cdr capture))
                        (name-node  (treesit-node-child-by-field-name
-                                    call-node "function_name"))
+                                    call-node "name"))
                        (func-name  (when name-node
-                                     (treesit-node-text name-node t)))
-                       (info        (when func-name
+                                     (concat "$" (treesit-node-text name-node t))))
+                       (info       (when func-name
                                      (picard-function-info func-name)))
-                       ;; Count children with type "argument".
                        (n-args     (cl-count "argument"
-                                             (treesit-node-children call-node)
-                                             :key #'treesit-node-type
-                                             :test #'string=))
+                                            (treesit-node-children call-node)
+                                            :key #'treesit-node-type
+                                            :test #'string=))
                        (node-start (when name-node
                                      (treesit-node-start name-node)))
                        (node-end   (when name-node
