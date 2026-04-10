@@ -22,11 +22,11 @@
     "authors": [
       {
         "name": "11xx",
-        "url": ""
+        "url": "https://codeberg.org/useless-utils/picard-mode"
       }
     ],
     "links": {
-      "repository": "",
+      "repository": "https://codeberg.org/useless-utils/picard-mode",
       "funding": ""
     }
   },

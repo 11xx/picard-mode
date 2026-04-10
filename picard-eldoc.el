@@ -4,7 +4,7 @@
 ;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, eldoc
-;; URL: https://github.com/example/picard-mode
+;; URL: https://codeberg.org/useless-utils/picard-mode
 
 ;;; Commentary:
 
@@ -403,7 +403,7 @@ Uses a dedicated help buffer so all information is visible at once."
                     for text = (flymake-diagnostic-text diag)
                     when text
                     collect (cons (symbol-name (flymake-diagnostic-type diag))
-                                 text)))))
+                                  text)))))
     (with-help-window (help-buffer)
       (princ "Picard documentation at point\n\n")
       (when flymake-diags

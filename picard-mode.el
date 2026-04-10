@@ -4,7 +4,7 @@
 ;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, musicbrainz, picard, tagger
-;; URL: https://musicbrainz.org/doc/Picard_Tagger_Script
+;; URL: https://codeberg.org/useless-utils/picard-mode
 
 ;;; Commentary:
 
@@ -55,7 +55,7 @@
   "Major mode for MusicBrainz Picard Tagger Script files."
   :group 'languages
   :prefix "picard-"
-  :link '(url-link "https://musicbrainz.org/doc/Picard_Tagger_Script"))
+  :link '(url-link "https://codeberg.org/useless-utils/picard-mode"))
 
 (defcustom picard-tab-width 2
   "Number of spaces each tab represents in `picard-mode' indentation.
@@ -439,8 +439,8 @@ See also: `picard-tab-width', `picard-indent-line'."
   (setq-local font-lock-defaults
               '(picard-font-lock-keywords
                 nil   ; KEYWORDS-ONLY: nil means syntactic fontification
-                      ; (strings, comments) is also performed, which is
-                      ; needed to render $noop blocks as comments.
+                      ;   (strings, comments) is also performed, which is
+                      ;   needed to render $noop blocks as comments.
                 nil   ; CASE-FOLD: nil means case-sensitive matching.
                 nil   ; SYNTAX-ALIST: no additional syntax modifications.
                 nil)) ; SYNTAX-BEGIN: nil = use font-lock defaults.

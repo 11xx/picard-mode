@@ -4,7 +4,7 @@
 ;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
 ;; Keywords: languages, tools, picard, musicbrainz, flymake
-;; URL: https://github.com/example/picard-mode
+;; URL: https://codeberg.org/useless-utils/picard-mode
 
 ;;; Commentary:
 
@@ -402,9 +402,9 @@ at least one parser, meaning the current buffer has a live tree."
                        (node-end   (when name-node
                                      (treesit-node-end name-node))))
                   (cond
-                    ((null func-name))          ; malformed node, skip
-                    ((string= func-name "$noop")) ; $noop is used for comments; skip
-                    ((null info)
+                   ((null func-name))            ; malformed node, skip
+                   ((string= func-name "$noop")) ; $noop is used for comments; skip
+                   ((null info)
                     (push (flymake-make-diagnostic
                            buffer node-start node-end
                            :error

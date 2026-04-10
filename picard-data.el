@@ -4,7 +4,7 @@
 ;; Version: 2026.04.10
 ;; Package-Requires: ((emacs "27.1") (cl-lib "0.5"))
 ;; Keywords: languages, tools, picard, musicbrainz
-;; URL: https://github.com/example/picard-mode
+;; URL: https://codeberg.org/useless-utils/picard-mode
 
 ;;; Commentary:
 
