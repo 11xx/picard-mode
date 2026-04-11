@@ -458,7 +458,7 @@ Each entry has the form (NAME . PLIST) where PLIST contains:
   :doc               Short documentation string.
 
 The 80 entries correspond to the full set of functions available in
-MusicBrainz Picard 2.x scripting.")
+MusicBrainz Picard v3 scripting.")
 
 ;;;; Tag / variable database
 

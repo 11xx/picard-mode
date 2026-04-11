@@ -34,13 +34,7 @@
 ;; by the Picard runtime.  This mode treats $noop(...) as a block comment
 ;; using syntax-propertize-function to correctly handle nested parentheses.
 ;;
-;; File extensions recognized: .picard, .pts
-;;
-;; Installation:
-;;   (require 'picard-mode)
-;;
-;; Or with use-package:
-;;   (use-package picard-mode)
+;; File extensions recognized: .picard, .pts, .ptsp
 
 ;;; Code:
 
@@ -543,8 +537,8 @@ See also: `picard-tab-width', `picard-indent-line'."
 (defun picard-mode--setup-extras ()
   "Activate optional flymake, eldoc, and completion features.
 
-Called from `picard-mode-hook'.  Each feature is loaded lazily:
-if the corresponding file is absent, that feature is simply skipped."
+Called from `picard-mode-hook'. If the corresponding file is absent,
+that feature is skipped."
   (picard--setup-optional-features))
 
 (add-hook 'picard-mode-hook #'picard-mode--setup-extras)
