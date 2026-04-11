@@ -134,28 +134,28 @@ of $noop(...) blocks.")
 
 ;; Design notes on font-lock choices:
 ;;
-;; 1. Function names ($func): matched with font-lock-function-name-face.
+;; 1. Function names ($func): matched with dedicated function-name styling.
 ;;    The regex deliberately excludes $noop: noop blocks are handled as
-;;    comments by syntax-propertize, not as highlighted function calls.
+;;    comments by syntax-propertize, not as regular function calls.
 ;;    Using a negative lookahead (?!noop) keeps font-lock and syntax
 ;;    properties consistent: if Emacs already marks a region as a comment,
 ;;    font-lock would ignore it anyway, but the exclusion also avoids
-;;    "$noop" appearing briefly in a non-comment face during re-fontification.
+;;    "$noop" appearing briefly with non-comment styling during re-fontification.
 ;;
-;; 2. Variables (%var%): matched with font-lock-variable-name-face.
+;; 2. Variables (%var%): matched with dedicated variable-name styling.
 ;;    Variable names may contain colons (:) in addition to alphanumerics
 ;;    and underscores, per the grammar.
 ;;
-;; 3. Escape sequences (\X and \uXXXX): matched with font-lock-escape-face.
-;;    This highlights the escape sequences that Picard itself interprets,
+;; 3. Escape sequences (\X and \uXXXX): matched with dedicated escape styling.
+;;    This emphasizes the escape sequences that Picard itself interprets,
 ;;    giving a visual cue that these are not literal characters.
 ;;
-;; 4. Commas: matched with font-lock-delimiter-face (Emacs 29+).
-;;    A fallback to font-lock-comment-delimiter-face is provided for
-;;    compatibility with Emacs versions that lack font-lock-delimiter-face.
+;; 4. Commas: matched with delimiter styling.
+;;    The exact styling is selected at runtime for compatibility with
+;;    Emacs versions that lack the newer delimiter face.
 ;;
 ;; 5. $noop itself: NOT handled here.  It is rendered as a comment region
-;;    by syntax-propertize, so font-lock will apply font-lock-comment-face
+;;    by syntax-propertize, so font-lock will apply comment styling
 ;;    automatically without any explicit keyword entry.
 
 (defvar picard--font-lock-delimiter-face
@@ -164,10 +164,9 @@ of $noop(...) blocks.")
   (if (facep 'font-lock-delimiter-face)
       'font-lock-delimiter-face
     'font-lock-comment-delimiter-face)
-  "Face used to highlight argument-separator commas in Picard scripts.
+  "Font-lock styling used for argument-separator commas in Picard scripts.
 
-On Emacs 29.1 and later, this resolves to `font-lock-delimiter-face'.
-On earlier versions, it falls back to `font-lock-comment-delimiter-face'.")
+The exact styling depends on the Emacs version and available themes.")
 
 (defconst picard-font-lock-keywords
   `(

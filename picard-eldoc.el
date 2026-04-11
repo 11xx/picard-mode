@@ -2,7 +2,7 @@
 
 ;; Author: 11xx
 ;; Version: 2026.4.10
-;; Package-Requires: ((emacs "27.1") (picard-data "0.1.0"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, tools, picard, musicbrainz, eldoc
 ;; URL: https://codeberg.org/useless-utils/picard-mode
 

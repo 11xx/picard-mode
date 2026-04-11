@@ -1,0 +1,66 @@
+#+title: picard-mode
+
+* Picard Mode
+
+picard-mode is an Emacs major mode for MusicBrainz Picard Tagger Script.
+It ships as one repo with shared data, regex-based =picard-mode=, and the
+Tree-sitter variant =picard-ts-mode=.
+
+* Requirements
+
+- Emacs 27.1+ for picard-mode
+- Emacs 29.1+ for picard-ts-mode
+  + + [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript Tree-sitter grammar]] for ts mode
+
+* Installation
+
+** package-vc
+#+begin_src elisp
+(require 'package-vc)
+(package-vc-install '(picard-mode :url "https://codeberg.org/useless-utils/picard-mode"))
+#+end_src
+
+** use-package with :vc
+#+begin_src elisp
+(use-package picard-mode
+  :vc (:url "https://codeberg.org/useless-utils/picard-mode"))
+#+end_src
+
+** straight.el
+#+begin_src elisp
+(straight-use-package
+ '(picard-mode :type git :host codeberg :repo "useless-utils/picard-mode"))
+#+end_src
+
+** elpaca
+#+begin_src elisp
+(elpaca (picard-mode
+         :host codeberg
+         :repo "useless-utils/picard-mode"))
+#+end_src
+
+** Manual install
+#+begin_src elisp
+(add-to-list 'load-path "/path/to/picard-mode")
+(require 'picard-mode)
+#+end_src
+
+* Tree-Sitter
+
+Install the grammar file with
+: picard-ts-mode-install-grammar
+
+or with:
+#+begin_src elisp
+M-x treesit-install-language-grammar RET taggerscript RET
+#+end_src
+
+or let Emacs use the repo source in =treesit-language-source-alist=.
+
+Once the grammar is installed, =picard-ts-mode= can auto-remap buffers that
+would otherwise open in =picard-mode=.
+
+* Notes
+
+- Completion, Eldoc, and Flymake also provided.
+- Shared metadata and documentation about the language are in =picard-data.el=
