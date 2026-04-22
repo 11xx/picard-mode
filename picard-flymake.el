@@ -1,7 +1,7 @@
 ;;; picard-flymake.el --- Flymake backend for Picard Tagger Script  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.4.10
+;; Version: 2026.4.22
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, tools, picard, musicbrainz, flymake
 ;; URL: https://codeberg.org/useless-utils/picard-mode

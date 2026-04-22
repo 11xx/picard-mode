@@ -1,7 +1,7 @@
 ;;; picard-data.el --- Central data definitions for Picard Tagger Script support  -*- lexical-binding: t -*-
 
 ;; Author: 11xx
-;; Version: 2026.4.10
+;; Version: 2026.4.22
 ;; Package-Requires: ((emacs "27.1") (cl-lib "0.5"))
 ;; Keywords: languages, tools, picard, musicbrainz
 ;; URL: https://codeberg.org/useless-utils/picard-mode

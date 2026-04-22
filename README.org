@@ -10,7 +10,7 @@ Tree-sitter variant =picard-ts-mode=.
 
 - Emacs 27.1+ for picard-mode
 - Emacs 29.1+ for picard-ts-mode
-  + + [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript Tree-sitter grammar]] for ts mode
+  + and [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript Tree-sitter grammar]] for ts mode
 
 * Installation
 
