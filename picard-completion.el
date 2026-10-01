@@ -41,7 +41,7 @@
 ;; Two contexts trigger completion:
 ;;
 ;;   After `$': complete function names. The region extends from the `$'
-;;             (or from one character after it) to point. Candidates are
+;;             to the end of the name at point. Candidates are
 ;;             taken from `picard-function-names'. Annotations show the
 ;;             functional category and arity summary.
 ;;
@@ -119,8 +119,8 @@ annotation shows the category, marked when Picard deprecates the entry:
 (defun picard-completion--function-bounds ()
   "Return (START . END) of the function name fragment starting after `$'.
 
-Returns nil when point is not after a `$' or when the `$' begins a tag
-context (which uses `%' delimiters).
+Returns nil when point is not on a name fragment that directly follows
+a `$'.
 
 START is the buffer position of the `$' sign.
 END   is the buffer position of the end of the current word at point."
