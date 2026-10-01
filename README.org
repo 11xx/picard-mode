@@ -17,7 +17,7 @@ package's catalogue of Picard built-ins.
 * Install
 
 Requires Emacs 27.1.  The Tree-sitter variant, =picard-ts-mode=, needs Emacs
-29.1 and the [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript grammar]].
+29.1 and the [[https://github.com/11xx/tree-sitter-taggerscript][taggerscript grammar]].
 
 #+begin_src elisp
 (package-vc-install "https://github.com/11xx/picard-mode") ; Emacs 29+

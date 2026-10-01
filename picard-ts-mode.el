@@ -36,7 +36,7 @@
 ;; =========================================================================
 ;;
 ;; The grammar is developed at
-;; https://codeberg.org/useless-utils/tree-sitter-taggerscript
+;; https://github.com/11xx/tree-sitter-taggerscript
 ;;
 ;; Node types of interest:
 ;;
@@ -101,7 +101,7 @@
 ;; `treesit-extra-load-path' or the default user grammar directory.
 
 (defvar picard-ts-mode--grammar-source
-  '(taggerscript "https://codeberg.org/useless-utils/tree-sitter-taggerscript")
+  '(taggerscript "https://github.com/11xx/tree-sitter-taggerscript")
   "Source for the taggerscript tree-sitter grammar.
 To be added to `treesit-language-source-alist' for automatic installation.
 The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
