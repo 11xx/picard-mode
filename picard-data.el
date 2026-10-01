@@ -220,7 +220,7 @@
     ("$inmulti"
      . (:min-args 2 :max-args 3 :category "conditional"
         :conditional-args nil
-        :args ("x" "y")
+        :args ("x" "y" "separator")
         :since "1.0"
         :doc "Returns true if the multi-value variable x contains exactly y as one of its values."))
     ("$is_audio"
