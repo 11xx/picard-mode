@@ -22,22 +22,25 @@
 ;; available for the current buffer:
 ;;
 ;;   Tree-sitter mode: walks the syntax tree for `function_call' nodes,
-;;                     extracts the function name and counts `argument'
-;;                     children, then validates against the database.
+;;                     takes the function name from the tree, counts the
+;;                     arguments after it, and validates both against the
+;;                     database.
 ;;
 ;;   Traditional mode: uses regular expressions to locate `$name(' patterns,
 ;;                       then counts commas at the same parenthesis nesting
 ;;                       depth to infer argument count.
 ;;
-;; In both modes, an additional linear scan checks for:
+;; In both modes, additional linear scans check for:
 ;;   - Unmatched `%' delimiters (odd number of `%' chars between newlines)
 ;;   - Unmatched parentheses (depth never goes negative; depth != 0 at EOF)
+;;   - Leading spaces in the condition arguments of conditional functions
 ;;
 ;; Diagnostic severity mapping
 ;; ---------------------------
 ;;   :error: call to an unknown function name
 ;;   :warning: call with wrong number of arguments (too few or too many)
-;;   :note: unmatched delimiter (`%' or parenthesis)
+;;   :note: unmatched delimiter (`%' or parenthesis), or significant
+;;          leading spaces in a condition
 ;;
 ;; Setup
 ;; -----
@@ -80,46 +83,41 @@ walks forward character by character, tracking paren depth and counting
 commas at depth 1 (immediately inside the top-level opening paren).
 
 Returns the integer argument count, or nil if START does not point at
-an opening parenthesis.
+an opening parenthesis.  As in Picard, only an empty argument list
+counts as zero arguments: `$f()' has none, while `$f( )' has one and
+`$f(,)' has two.
 
- Commas inside nested function calls (depth > 1) are not counted because
+Commas inside nested function calls (depth > 1) are not counted because
 they belong to the nested call's own argument list.
 
 Escaped parentheses (backslash followed by paren) are skipped because
 they represent literal paren characters in Picard, not structural markers."
   (save-excursion
     (goto-char start)
-    (unless (eq (char-after) ?\()
-      (cl-return-from picard-flymake--count-args-traditional nil))
-    (let ((depth 0)
-          (arg-count 0)
-          (has-content nil))
-      (while (and (not (eobp))
-                  (or (> depth 0) (= (point) start)))
-        (let ((ch (char-after)))
-          (cond
-           ;; Skip Picard escape sequences like \( and \) without
-           ;; treating the escaped character as syntax.
-           ((and (eq ch ?\\)
-                 (char-after (1+ (point))))
-            (forward-char 2))
-           ((eq ch ?\()
-            (setq depth (1+ depth))
-            (when (= depth 1)
-              (setq arg-count 1))
-            (forward-char 1))
-           ((eq ch ?\))
-            (setq depth (1- depth))
-            (forward-char 1))
-           ((and (eq ch ?,) (= depth 1))
-            (setq arg-count (1+ arg-count))
-            (forward-char 1))
-           ((and (= depth 1) (not (memq ch '(?\s ?\t ?\n ?\r))))
-            (setq has-content t)
-            (forward-char 1))
-           (t
-            (forward-char 1)))))
-      (if has-content arg-count 0))))
+    (when (eq (char-after) ?\()
+      (let ((depth 0)
+            (arg-count 1))
+        (while (and (not (eobp))
+                    (or (> depth 0) (= (point) start)))
+          (let ((ch (char-after)))
+            (cond
+             ;; Skip Picard escape sequences like \( and \) without
+             ;; treating the escaped character as syntax.
+             ((and (eq ch ?\\)
+                   (char-after (1+ (point))))
+              (forward-char 2))
+             ((eq ch ?\()
+              (setq depth (1+ depth))
+              (forward-char 1))
+             ((eq ch ?\))
+              (setq depth (1- depth))
+              (forward-char 1))
+             ((and (eq ch ?,) (= depth 1))
+              (setq arg-count (1+ arg-count))
+              (forward-char 1))
+             (t
+              (forward-char 1)))))
+        (if (eq (char-after (1+ start)) ?\)) 0 arg-count)))))
 
 (defun picard-flymake--scan-traditional (buffer)
   "Scan BUFFER using regex and return a list of Flymake diagnostics.
@@ -183,6 +181,8 @@ arguments, and reports arity violations."
 Returns a list of `flymake-diagnostic' objects with severity `:note' for
 each unmatched delimiter found.
 
+Escaped characters (a backslash and the character after it) are skipped.
+
 Percent signs are tracked per-line: an odd number of `%' characters on a
 line is reported at the position of the last one.
 
@@ -206,27 +206,32 @@ last open paren."
                    (pct-pos    nil))
               ;; Walk the line character by character to count `%' and
               ;; track parenthesis depth simultaneously.
-              (cl-loop for idx from 0 below (length line)
-                       for ch = (aref line idx)
-                       for buf-pos = (+ line-start idx)
-                       do (cond
-                           ((eq ch ?%)
-                            (setq pct-count (1+ pct-count))
-                            (setq pct-pos buf-pos))
-                           ((eq ch ?\()
-                            (setq paren-depth (1+ paren-depth))
-                            (setq last-open-pos buf-pos))
-                           ((eq ch ?\))
-                            (if (> paren-depth 0)
-                                (setq paren-depth (1- paren-depth))
-                              ;; Depth would go negative: unmatched close paren.
-                              (push (flymake-make-diagnostic
-                                     buffer
-                                     buf-pos
-                                     (1+ buf-pos)
-                                     :note
-                                     "Unmatched closing parenthesis")
-                                    diags)))))
+              (let ((idx 0))
+                (while (< idx (length line))
+                  (let ((ch (aref line idx))
+                        (buf-pos (+ line-start idx)))
+                    (cond
+                     ((eq ch ?\\)
+                      ;; Skip the escaped character as well.
+                      (setq idx (1+ idx)))
+                     ((eq ch ?%)
+                      (setq pct-count (1+ pct-count))
+                      (setq pct-pos buf-pos))
+                     ((eq ch ?\()
+                      (setq paren-depth (1+ paren-depth))
+                      (setq last-open-pos buf-pos))
+                     ((eq ch ?\))
+                      (if (> paren-depth 0)
+                          (setq paren-depth (1- paren-depth))
+                        ;; Depth would go negative: unmatched close paren.
+                        (push (flymake-make-diagnostic
+                               buffer
+                               buf-pos
+                               (1+ buf-pos)
+                               :note
+                               "Unmatched closing parenthesis")
+                              diags)))))
+                  (setq idx (1+ idx))))
               ;; Report an odd number of `%' on this line.
               (when (and (cl-oddp pct-count) pct-pos)
                 (push (flymake-make-diagnostic
@@ -251,7 +256,7 @@ last open paren."
 ;;;; Whitespace-in-conditional-argument check
 
 ;; Picard Script evaluates function arguments as strings.  Any characters
-;; that appear literally in the source: including leading spaces: become
+;; that appear literally in the source, including leading spaces, become
 ;; part of the evaluated string.  This is a frequent source of mistakes when
 ;; authors indent multi-line $if / $if2 / $and / $or / $not calls with spaces
 ;; rather than tabs:
@@ -264,18 +269,21 @@ last open paren."
 ;;
 ;; The Picard runtime passes those leading spaces verbatim to the function,
 ;; turning an empty string into " " (which is considered non-empty and therefore
-;; truthy in $if's condition test).  Tab-based indentation does not cause this
-;; problem because Picard's argument parser strips a single leading tab from
-;; each argument line.
+;; truthy in $if's condition test).  Picard removes every tab and newline from
+;; a file naming script before evaluating it, so the tab indentation this
+;; package inserts never reaches an argument there.  Tagging scripts are
+;; evaluated as written, so there tabs and newlines inside an argument are as
+;; significant as spaces; only spaces are reported.
 ;;
 ;; The check emits a `:note' diagnostic (informational, not error) because the
 ;; pattern may be intentional.  Severity `:note' keeps the warning visible in
 ;; the Flymake gutter without being alarmist.
 ;;
-;; The set of guarded conditionals is limited to those that evaluate their
-;; arguments eagerly in a position where extra whitespace is most misleading:
-;; $if, $if2 (first non-empty), $and, $or, $not.  Other functions ($set,
-;; $replace, …) may legitimately want leading spaces in string arguments.
+;; The guarded functions are those whose `:conditional-args' entry in
+;; `picard-builtin-functions' marks arguments as conditions, as listed by
+;; `picard-data-conditional-functions': $if, $if2, $and, $or, $not and
+;; $while.  Other functions ($set, $replace, …) may legitimately want
+;; leading spaces in string arguments.
 
 
 (defun picard-flymake--whitespace-diagnostic (buffer start end message)
@@ -304,7 +312,8 @@ It only reports leading space runs at the start of condition arguments.
 Tabs are ignored; only spaces are diagnostic."
   (with-current-buffer buffer
     (let ((diags nil)
-          (cond-re (rx "$" (or "if2" "if" "and" "or" "not") "(")))
+          (cond-re (concat (regexp-opt (picard-data-conditional-functions))
+                           "(")))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward cond-re nil t)
@@ -404,6 +413,7 @@ at least one parser, meaning the current buffer has a live tree."
                   (cond
                    ((null func-name))            ; malformed node, skip
                    ((string= func-name "$noop")) ; $noop is used for comments; skip
+                   ((and info (null n-args)))    ; no argument list, skip
                    ((null info)
                     (push (flymake-make-diagnostic
                            buffer node-start node-end
@@ -453,9 +463,9 @@ Diagnostics are produced by three complementary analyses:
   2. Delimiter balance checking: finds unmatched `%' signs and parentheses.
      This scan is always performed, regardless of tree-sitter availability.
 
-  3. Whitespace-in-conditional-argument checking: warns when a conditional
-     function (`$if', `$if2', `$and', `$or', `$not') has significant spaces
-     in a condition position.  Leading and trailing spaces become part of the
+  3. Whitespace-in-conditional-argument checking: notes when a conditional
+     function (`$if', `$if2', `$and', `$or', `$not', `$while') has leading
+     spaces in a condition position.  Those spaces become part of the
      evaluated string and can change truthiness in non-obvious ways.
 
 See `picard-flymake--scan-treesit', `picard-flymake--scan-traditional',
