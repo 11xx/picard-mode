@@ -4,7 +4,7 @@
 ;; Version: 2026.4.22
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: languages, musicbrainz, picard, tagger
-;; URL: https://codeberg.org/useless-utils/picard-mode
+;; URL: https://github.com/11xx/picard-mode
 
 ;;; Commentary:
 
@@ -51,7 +51,7 @@
   "Major mode for MusicBrainz Picard Tagger Script files."
   :group 'languages
   :prefix "picard-"
-  :link '(url-link "https://codeberg.org/useless-utils/picard-mode"))
+  :link '(url-link "https://github.com/11xx/picard-mode"))
 
 (defcustom picard-tab-width 2
   "Number of spaces each tab represents in `picard-mode' indentation.

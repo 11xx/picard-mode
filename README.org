@@ -1,66 +1,41 @@
 #+title: picard-mode
 
-* Picard Mode
+Emacs major modes for MusicBrainz Picard Tagger Script.
 
-picard-mode is an Emacs major mode for MusicBrainz Picard Tagger Script.
-It ships as one repo with shared data, regex-based =picard-mode=, and the
-Tree-sitter variant =picard-ts-mode=.
+Picard's file naming and tagging scripts grow into deeply nested =$if(...)=
+calls, where a misspelled function or a missing parenthesis is easy to
+write and hard to spot.  picard-mode edits those scripts in Emacs.
 
-* Requirements
+It highlights functions, variables, escapes and known tags, treats
+=$noop(...)= as a comment for the usual comment commands, and indents nested
+calls with tabs, one per level.  Flymake reports unknown functions, wrong
+argument counts and unbalanced =%= or parentheses.  Eldoc shows the
+signature and documentation of the function or tag at point.  Completion
+offers function names after =$= and tag names inside =%...%=, from the
+package's catalogue of Picard built-ins.
 
-- Emacs 27.1+ for picard-mode
-- Emacs 29.1+ for picard-ts-mode
-  + and [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript Tree-sitter grammar]] for ts mode
+* Install
 
-* Installation
+Requires Emacs 27.1.  The Tree-sitter variant, =picard-ts-mode=, needs Emacs
+29.1 and the [[https://codeberg.org/useless-utils/tree-sitter-taggerscript][taggerscript grammar]].
 
-** package-vc
 #+begin_src elisp
-(require 'package-vc)
-(package-vc-install '(picard-mode :url "https://codeberg.org/useless-utils/picard-mode"))
+(package-vc-install "https://github.com/11xx/picard-mode") ; Emacs 29+
 #+end_src
 
-** use-package with :vc
-#+begin_src elisp
-(use-package picard-mode
-  :vc (:url "https://codeberg.org/useless-utils/picard-mode"))
-#+end_src
+With Elpaca, =(elpaca (picard-mode :host github :repo "11xx/picard-mode"))=;
+with straight.el, =(straight-use-package '(picard-mode :host github :repo "11xx/picard-mode"))=.
 
-** straight.el
-#+begin_src elisp
-(straight-use-package
- '(picard-mode :type git :host codeberg :repo "useless-utils/picard-mode"))
-#+end_src
+* Use
 
-** elpaca
-#+begin_src elisp
-(elpaca (picard-mode
-         :host codeberg
-         :repo "useless-utils/picard-mode"))
-#+end_src
+Files ending in =.picard=, =.pts= or =.ptsp= open in the mode, and =C-c C-d=
+shows the documentation and diagnostics at point in a help buffer.
 
-** Manual install
-#+begin_src elisp
-(add-to-list 'load-path "/path/to/picard-mode")
-(require 'picard-mode)
-#+end_src
+For =picard-ts-mode=, =M-x picard-ts-mode-install-grammar= clones and
+compiles the grammar, which needs =git= and a C compiler.  On Emacs 29 and
+later the package's autoloads open these files in =picard-ts-mode=, which
+has no highlighting or indentation until the grammar is installed.
 
-* Tree-Sitter
+* License
 
-Install the grammar file with
-: picard-ts-mode-install-grammar
-
-or with:
-#+begin_src elisp
-M-x treesit-install-language-grammar RET taggerscript RET
-#+end_src
-
-or let Emacs use the repo source in =treesit-language-source-alist=.
-
-Once the grammar is installed, =picard-ts-mode= can auto-remap buffers that
-would otherwise open in =picard-mode=.
-
-* Notes
-
-- Completion, Eldoc, and Flymake also provided.
-- Shared metadata and documentation about the language are in =picard-data.el=
+Public domain; see [[file:UNLICENSE][UNLICENSE]].

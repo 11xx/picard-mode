@@ -4,7 +4,7 @@
 ;; Version: 2026.4.22
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages music musicbrainz picard tagger tree-sitter
-;; URL: https://codeberg.org/useless-utils/picard-mode
+;; URL: https://github.com/11xx/picard-mode
 
 ;;; Commentary:
 
