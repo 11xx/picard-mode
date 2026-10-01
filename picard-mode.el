@@ -151,12 +151,22 @@ of $noop(...) blocks.")
 ;;    giving a visual cue that these are not literal characters.
 ;;
 ;; 4. Commas: matched with delimiter styling.
-;;    The exact styling is selected at runtime for compatibility with
-;;    Emacs versions that lack the newer delimiter face.
+;;
+;; The escape and delimiter faces are chosen at load time, since Emacs
+;; versions before 29.1 lack `font-lock-escape-face' and
+;; `font-lock-delimiter-face'.
 ;;
 ;; 5. $noop itself: NOT handled here.  It is rendered as a comment region
 ;;    by syntax-propertize, so font-lock will apply comment styling
 ;;    automatically without any explicit keyword entry.
+
+(defvar picard--font-lock-escape-face
+  ;; font-lock-escape-face was introduced in Emacs 29.1 and inherits from
+  ;; font-lock-regexp-grouping-backslash, which older Emacsen provide.
+  (if (facep 'font-lock-escape-face)
+      'font-lock-escape-face
+    'font-lock-regexp-grouping-backslash)
+  "Font-lock styling used for escape sequences in Picard scripts.")
 
 (defvar picard--font-lock-delimiter-face
   ;; font-lock-delimiter-face was introduced in Emacs 29.1.
@@ -175,9 +185,9 @@ The exact styling depends on the Emacs version and available themes.")
     ;; Must come first so that \$ and \% are highlighted as escapes and not
     ;; as the start of a function call or variable reference.
     ;; Matches: \n \t \\ \$ \% \( \) \, and \uXXXX (Unicode escapes)
-    (,(rx (or (seq "\\" (any "nts$%()\\,"))
+    (,(rx (or (seq "\\" (any "nt$%()\\,"))
               (seq "\\u" (repeat 4 (any hex-digit)))))
-     (0 'font-lock-escape-face))
+     (0 picard--font-lock-escape-face))
 
     ;; Function names ($funcname)
     ;; ====================================================================
@@ -188,7 +198,7 @@ The exact styling depends on the Emacs version and available themes.")
     ;;
     ;; Highlight only the sigil + name, not the opening parenthesis,
     ;; so that the paren retains its structural syntax-class coloring.
-    (,(rx "$" (not (any space)) (zero-or-more (any alnum "_")))
+    (,(rx "$" (one-or-more (any alnum "_")))
      (0 (when (not (string-equal (match-string 0) "$noop"))
           'font-lock-function-name-face)))
 
