@@ -63,14 +63,10 @@
 ;;
 ;; Install the taggerscript Tree-sitter grammar (once):
 ;;
-;;   M-x treesit-install-language-grammar RET taggerscript RET
+;;   M-x picard-ts-mode-install-grammar RET
 ;;
-;; Or set up automatic installation:
-;;
-;;   (add-to-list 'treesit-language-source-alist
-;;                picard-ts-mode--grammar-source)
-;;
-;; Files with extensions .picard or .pts are associated automatically.
+;; Files with extensions .picard, .pts or .ptsp open in `picard-mode',
+;; which is remapped to `picard-ts-mode' whenever the grammar is available.
 
 ;;; Code:
 
@@ -558,7 +554,7 @@ is unavailable, the mode still activates but without syntax highlighting
 or structure-aware indentation.
 
 To install the grammar interactively:
-  M-x treesit-install-language-grammar RET taggerscript RET
+  \\[picard-ts-mode-install-grammar]
 
 The grammar source URL is stored in `picard-ts-mode--grammar-source'
 and is automatically added to `treesit-language-source-alist' when this
@@ -593,64 +589,46 @@ Keyboard bindings inherited from `prog-mode':
 (define-key picard-ts-mode-map (kbd "C-c C-d") #'picard-eldoc-show-all)
 
 
-;;;; Auto-mode Association
-;; ==========================================================================
-
-;; Associate file extensions with this mode.  The `auto-mode-alist' entries
-;; ensure that .picard and .pts files open in `picard-ts-mode' (or fall back
-;; gracefully; see `major-mode-remap-alist' below).
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.picard\\'" . picard-ts-mode))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.pts\\'" . picard-ts-mode))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.ptsp\\'" . picard-ts-mode))
-
-
 ;;;; Transparent Upgrade via major-mode-remap-alist
 ;; ==========================================================================
 
-;; `major-mode-remap-alist' (introduced in Emacs 29) allows a mode to
-;; transparently redirect buffers that would open in one major mode to
-;; another.  This is the canonical mechanism for ts-modes to upgrade their
-;; regex-based predecessors without users needing to update their
-;; `auto-mode-alist' or `find-file' hooks.
+;; `picard-mode' owns the `auto-mode-alist' entries for Picard files.
+;; `major-mode-remap-alist' (Emacs 29+) redirects a buffer that would open
+;; in one major mode to another, so the tree-sitter mode upgrades
+;; `picard-mode' only while the grammar can be loaded; without it, files
+;; keep opening in `picard-mode'.
 ;;
-;; The check `(treesit-ready-p 'taggerscript t)' uses t as the second
-;; argument (QUIET), suppressing any warning.  The remap is added only
-;; when the grammar is actually available, so that users without the grammar
-;; continue to get `picard-mode' as before.
-;;
-;; Result: if the taggerscript grammar is installed, any buffer that Emacs
-;; would open in `picard-mode' is silently redirected to `picard-ts-mode'.
+;; The autoload runs before `treesit.el' is loaded, so the check uses the
+;; built-in `treesit-language-available-p' rather than `treesit-ready-p'.
+;; It is unbound on Emacs 28 and older and on builds without tree-sitter,
+;; which leaves the remap out there too.
 
 ;;;###autoload
-(when (and (fboundp 'treesit-ready-p)
-           (treesit-ready-p 'taggerscript t))
+(when (and (fboundp 'treesit-language-available-p)
+           (treesit-language-available-p 'taggerscript))
   (add-to-list 'major-mode-remap-alist '(picard-mode . picard-ts-mode)))
 
 
 ;;;; Grammar Installation Helper
 ;; ==========================================================================
 
+;;;###autoload
 (defun picard-ts-mode-install-grammar ()
   "Install the taggerscript Tree-sitter grammar for `picard-ts-mode'.
-This is a convenience wrapper around `treesit-install-language-grammar'.
-The grammar source URL must already be present in
-`treesit-language-source-alist', which is ensured by loading this file.
+This is a convenience wrapper around `treesit-install-language-grammar',
+using the source in `picard-ts-mode--grammar-source'.
 
-After successful installation, revert any buffers visiting Picard Script
-files to activate tree-sitter highlighting."
+Once the grammar loads, `picard-mode' is remapped to `picard-ts-mode';
+revert buffers visiting Picard Script files to switch them over."
   (interactive)
   (unless (assq 'taggerscript treesit-language-source-alist)
     (add-to-list 'treesit-language-source-alist
                  picard-ts-mode--grammar-source))
   (treesit-install-language-grammar 'taggerscript)
-  (message "taggerscript grammar installed.  \
-Revert Picard Script buffers to activate tree-sitter mode."))
+  (when (treesit-ready-p 'taggerscript t)
+    (add-to-list 'major-mode-remap-alist '(picard-mode . picard-ts-mode))
+    (message "taggerscript grammar installed.  \
+Revert Picard Script buffers to activate tree-sitter mode.")))
 
 
 ;;;; Optional Feature Integration

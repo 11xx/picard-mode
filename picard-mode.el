@@ -505,15 +505,18 @@ See also: `picard-tab-width', `picard-indent-line'."
 ;;;; Auto-mode-alist Registration
 ;; ==========================================================================
 
-;; Associate file extensions .picard and .pts with picard-mode.
+;; Associate file extensions .picard, .pts and .ptsp with picard-mode.
 ;;
 ;; .picard: the conventional extension for standalone Picard script files.
 ;; .pts: short for "Picard Tagger Script", sometimes used in the
 ;;           community for script files shared outside the Picard GUI.
+;; .ptsp: Picard's script package export, a YAML document whose
+;;           `script' field holds the Tagger Script.
 ;;
 ;; The ###autoload cookie ensures these associations are registered without
 ;; fully loading the package (via autoload files), consistent with standard
-;; Emacs package conventions.
+;; Emacs package conventions.  When the taggerscript grammar is available,
+;; picard-ts-mode.el remaps `picard-mode' to `picard-ts-mode'.
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.picard\\'" . picard-mode))

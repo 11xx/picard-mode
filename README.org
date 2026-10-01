@@ -33,8 +33,8 @@ shows the documentation and diagnostics at point in a help buffer.
 
 For =picard-ts-mode=, =M-x picard-ts-mode-install-grammar= clones and
 compiles the grammar, which needs =git= and a C compiler.  On Emacs 29 and
-later the package's autoloads open these files in =picard-ts-mode=, which
-has no highlighting or indentation until the grammar is installed.
+later, these files open in =picard-ts-mode= whenever the grammar can be
+loaded, and in =picard-mode= otherwise.
 
 * License
 
