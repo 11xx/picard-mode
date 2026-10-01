@@ -19,6 +19,9 @@
 (require 'picard-flymake)
 (require 'picard-eldoc)
 
+;; Loaded only when tree-sitter and the grammar are available.
+(declare-function picard-ts-mode "picard-ts-mode" ())
+
 (defconst picard-test--root
   (file-name-directory
    (directory-file-name
