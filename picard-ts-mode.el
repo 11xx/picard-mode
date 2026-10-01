@@ -52,12 +52,12 @@
 ;; Relationship to picard-mode
 ;; ==========================================================================
 ;;
-;; When the `taggerscript' grammar is available at runtime,
+;; When the `taggerscript' grammar can be loaded as the package's
+;; autoloads run, or once `picard-ts-mode-install-grammar' installs it,
 ;; `picard-ts-mode' registers itself as a transparent upgrade via
 ;; `major-mode-remap-alist'.  Buffers that would normally open in
 ;; `picard-mode' are silently redirected to `picard-ts-mode' without
-;; any user action.  See the bottom of this file for the auto-remap
-;; logic.
+;; any user action.  See "Transparent Upgrade" below for the remap logic.
 ;;
 ;; Usage
 ;; ==========================================================================
