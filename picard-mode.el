@@ -108,7 +108,7 @@ width: the actual indentation token is always a literal TAB character."
     (modify-syntax-entry ?, "." table)
 
     ;; Underscore and colon: word/symbol constituents.
-    ;; Variable names may contain colons (e.g., %musicbrainz_trackid%).
+    ;; Variable names may contain colons (e.g., %performer:vocal%).
     ;; Underscores are already word/symbol constituents by default in most
     ;; syntax tables, but colon needs explicit promotion.
     (modify-syntax-entry ?: "_" table)
@@ -135,9 +135,10 @@ of $noop(...) blocks.")
 ;; Design notes on font-lock choices:
 ;;
 ;; 1. Function names ($func): matched with dedicated function-name styling.
-;;    The regex deliberately excludes $noop: noop blocks are handled as
+;;    The rule deliberately excludes $noop: noop blocks are handled as
 ;;    comments by syntax-propertize, not as regular function calls.
-;;    Using a negative lookahead (?!noop) keeps font-lock and syntax
+;;    Emacs regexps have no negative lookahead, so a guard on the match
+;;    drops the face for "$noop".  This keeps font-lock and syntax
 ;;    properties consistent: if Emacs already marks a region as a comment,
 ;;    font-lock would ignore it anyway, but the exclusion also avoids
 ;;    "$noop" appearing briefly with non-comment styling during re-fontification.
@@ -337,7 +338,7 @@ a buffer region needs its syntax properties refreshed (e.g., after edits)."
 (defun picard--count-net-parens (text)
   "Return the net open-parenthesis count in TEXT.
 
-Counts unescaped '(' as +1 and unescaped ')' as -1.  Escaped parentheses
+Counts unescaped `(' as +1 and unescaped `)' as -1.  Escaped parentheses
 (\\( and \\)) are skipped.  The return value is the sum across all
 characters in TEXT and may be negative if there are more close parens than
 open parens."

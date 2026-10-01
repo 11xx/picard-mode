@@ -28,7 +28,7 @@
 ;;   - Well-known read/write tags (e.g. %artist%, %title%)
 ;;     receive distinctive highlighting to set them apart.
 ;;
-;;   - Hidden read-only internal variables (e.g. %_filename%, %_bitrate%)
+;;   - Hidden internal variables (e.g. %_filename%, %_bitrate%)
 ;;     receive a different style to indicate they are internal.
 ;;
 ;; Tags not present in `picard-builtin-tags' retain the base face,

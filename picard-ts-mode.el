@@ -45,8 +45,9 @@
 ;;   noop             $noop(...) comment block
 ;;   variable         %varname%: child: variable_name
 ;;   escape_sequence  \X or \uXXXX
-;;   text             literal text content
+;;   text             literal text content at the top level
 ;;   argument         one argument in a function call (may nest)
+;;   argument_text    literal text content inside an argument
 ;;
 ;; Relationship to picard-mode
 ;; ==========================================================================
@@ -90,10 +91,11 @@
 ;;
 ;;   (LANGUAGE-SYMBOL URL)
 ;;
-;; `treesit-install-language-grammar' reads this alist and clones the
-;; repository, runs the Tree-sitter CLI to produce a shared library
-;; (libtree-sitter-LANGUAGE.so / .dylib / .dll), and installs it under
-;; `treesit-extra-load-path' or the default user grammar directory.
+;; `treesit-install-language-grammar' reads this alist, clones the
+;; repository, compiles its generated parser sources with a C compiler
+;; into a shared library (libtree-sitter-LANGUAGE.so / .dylib / .dll), and
+;; installs it in the `tree-sitter' subdirectory of `user-emacs-directory'
+;; unless told otherwise.
 
 (defvar picard-ts-mode--grammar-source
   '(taggerscript "https://github.com/11xx/tree-sitter-taggerscript")
@@ -178,9 +180,8 @@ The value is a two-element list (LANGUAGE-SYMBOL URL) as consumed by
 ;;   [pat1 pat2] @capture: alternation: matches either pattern
 ;;   "#match?" predicate             applies a regex guard (rarely needed here)
 ;;
-;; Each @capture name must correspond to a face variable (or be mapped via
-;; the optional :default-face argument, not used here).  The special prefix
-;; @font-lock- is stripped and the remainder used to look up a standard face.
+;; Each capture name is the face applied to the captured node; a capture
+;; may also name a function, which is then called to fontify the node.
 
 (defvar picard-ts-mode--font-lock-settings
   (treesit-font-lock-rules
@@ -420,9 +421,9 @@ each rule group for a description of the matcher/anchor/offset semantics.")
 ;; node: navigating between $if(...), $set(...), $noop(...) etc. is the
 ;; primary structural movement.
 ;;
-;; The value is a regexp matched against node type names.  Using the
-;; exact string "function_call" (anchored implicitly by treesit internals)
-;; ensures only function call nodes are treated as defuns.
+;; The value is a regexp matched against node type names.  No other node
+;; type contains "function_call" or "noop", so the unanchored regexp
+;; matches exactly those two.
 
 (defvar picard-ts-mode--defun-type-regexp
   (rx (or "function_call" "noop"))
@@ -575,8 +576,8 @@ Keyboard bindings inherited from `prog-mode':
   ;;   1. The `treesit' module is available (Emacs was built with it).
   ;;   2. The `taggerscript' grammar shared library can be found and loaded.
   ;;
-  ;; Passing nil as the second argument means: emit a warning in the echo
-  ;; area if the grammar is missing, but do not signal an error.  This
+  ;; Omitting the second argument (QUIET) means: display a warning if the
+  ;; grammar is missing, but do not signal an error.  This
   ;; allows the mode to activate (providing basic prog-mode behaviour) even
   ;; without the grammar, which is preferable to a hard failure.
   (when (treesit-ready-p 'taggerscript)
