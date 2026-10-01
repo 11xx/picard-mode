@@ -239,85 +239,77 @@ misidentified.")
 ;; delimiters, so this mode uses the syntax-propertize mechanism instead.
 ;;
 ;; The approach:
-;;   1. Scan forward in the requested region for "$noop(".
-;;   2. On each match, manually walk forward, tracking parenthesis depth.
+;;   1. If the requested region starts inside a $noop block that began
+;;      earlier, resume that block's scan from its "$".  Emacs propertizes
+;;      a buffer in chunks, so a long block can straddle chunk boundaries.
+;;   2. Scan forward in the requested region for "$noop(".
+;;   3. On each match, manually walk forward, tracking parenthesis depth.
 ;;      Backslash escapes are honoured so that \( and \) inside a noop
 ;;      do not disturb the depth count.
-;;   3. When depth returns to zero, the matching ) has been found.
-;;   4. Apply text-property 'syntax-table to mark:
-;;        • The "$" of "$noop(" as generic comment-start (syntax code 11,
-;;          style "b" = block comment fence).
-;;        • The closing ")" as generic comment-end  (syntax code 12,
-;;          style "b").
+;;   4. When depth returns to zero, the matching ) has been found.
+;;   5. Apply text-property 'syntax-table to mark:
+;;        • The "$" of "$noop(" as comment-start (syntax class 11).
+;;        • The closing ")" as comment-end (syntax class 12).
 ;;
-;; Syntax codes 11 and 12 are the "comment fence" codes that Emacs uses for
-;; non-standard comment delimiters.  When a character carries syntax code 11
-;; via a text property, Emacs treats everything from that point to the next
-;; syntax-code-12 character as a comment.  This integrates cleanly with
-;; font-lock (which respects comment regions) and with Emacs' comment
-;; navigation commands.
-;;
-;; The cons cell '(11 . ?!) is the canonical way to specify a comment-start
-;; fence: 11 is the integer syntax code for "comment start (style b)", and
-;; ?! is an arbitrary paired-comment character (required by the data
-;; structure but not functionally significant for fence-style comments).
-;; Similarly '(12 . ?!) marks a comment-end fence.
+;; A raw syntax descriptor is a cons (CLASS . MATCHING-CHAR).  Classes 11
+;; and 12 are the comment-start and comment-end classes, the same ones the
+;; "<" and ">" syntax strings produce; the matching character ?! carries no
+;; meaning for them.  When "$" carries class 11 via a text property, Emacs
+;; treats everything from there to the next class-12 character as a
+;; comment.  This integrates cleanly with font-lock (which respects comment
+;; regions) and with Emacs' comment navigation commands.
+
+(defun picard--syntax-propertize-noop (noop-start end)
+  "Mark the $noop block whose \"$\" is at NOOP-START as a comment.
+
+Puts comment-start syntax on the \"$\", then walks forward from the
+opening parenthesis counting depth (honoring backslash escapes) and puts
+comment-end syntax on the matching closing parenthesis if it lies before
+END.  Leaves point after that parenthesis, or at or after END."
+  (put-text-property noop-start (1+ noop-start) 'syntax-table '(11 . ?!))
+  ;; Skip "$noop(": the walk starts inside the argument list.
+  (goto-char (+ noop-start 6))
+  (let ((depth 1))
+    (while (and (> depth 0) (< (point) end))
+      (let ((ch (char-after)))
+        (cond
+         ;; Backslash escape: skip both the backslash and the next
+         ;; character so \( and \) do not change the depth.
+         ((eq ch ?\\)
+          (forward-char 2))
+         ((eq ch ?\()
+          (setq depth (1+ depth))
+          (forward-char 1))
+         ;; When depth reaches zero, this ")" closes the $noop block.
+         ((eq ch ?\))
+          (setq depth (1- depth))
+          (when (zerop depth)
+            (put-text-property (point) (1+ (point))
+                               'syntax-table '(12 . ?!)))
+          (forward-char 1))
+         (t
+          (forward-char 1)))))))
 
 (defun picard--syntax-propertize (start end)
   "Apply syntax properties for $noop() comment blocks between START and END.
 
-Scans forward from START looking for occurrences of the literal string
-\"$noop(\".  For each occurrence, walks forward counting parenthesis depth
-(honoring backslash escapes) to locate the matching closing parenthesis.
-Marks the \"$\" of \"$noop\" with comment-start-fence syntax (code 11) and
-the closing \")\" with comment-end-fence syntax (code 12) using
-`put-text-property' with the `syntax-table' property.
+When START lies inside a $noop block opened before it, resumes that
+block's scan so its closing parenthesis is still found.  Then scans
+forward for each literal \"$noop(\" and marks it with
+`picard--syntax-propertize-noop', which gives the \"$\" comment-start
+syntax and the matching \")\" comment-end syntax through the
+`syntax-table' text property.
 
 This function is assigned to `syntax-propertize-function' in `picard-mode'.
 It is called by the Emacs font-lock and syntax-analysis machinery whenever
 a buffer region needs its syntax properties refreshed (e.g., after edits)."
   (goto-char start)
-  (while (re-search-forward "\\$noop(" end t)
-    (let* (;; noop-start: position of the '$' that begins "$noop("
-           (noop-start (match-beginning 0))
-           ;; paren-open: position of the '(' that opens the argument list.
-           ;; (1- (point)) because `re-search-forward' leaves point AFTER the
-           ;; matched string, so point is one past the '('.
-           (_paren-open (1- (point)))
-           ;; depth: tracks how many unmatched '(' have been seen.
-           ;; Starts at 1 because we have already consumed the opening '('.
-           (depth 1))
-      ;; Mark the '$' as a comment-start fence.
-      ;; Everything from here to the matching ')' will be in comment syntax.
-      (put-text-property noop-start (1+ noop-start)
-                         'syntax-table '(11 . ?!))
-      ;; Walk forward, adjusting depth for each unescaped ( or ).
-      ;; The loop terminates when depth reaches 0 (matching ')' found)
-      ;; or when the scan reaches END (noop block continues beyond region).
-      (while (and (> depth 0) (< (point) end))
-        (let ((ch (char-after)))
-          (cond
-           ;; Backslash escape: skip both the backslash and the next
-           ;; character.  This prevents \( and \) inside a noop from
-           ;; being counted as depth changes.
-           ((eq ch ?\\)
-            (forward-char 2))
-           ;; Opening paren: increase nesting depth.
-           ((eq ch ?\()
-            (setq depth (1+ depth))
-            (forward-char 1))
-           ;; Closing paren: decrease depth.  When depth reaches zero,
-           ;; this ')' is the one that closes the $noop block.
-           ((eq ch ?\))
-            (setq depth (1- depth))
-            (when (zerop depth)
-              ;; Mark this ')' as a comment-end fence.
-              (put-text-property (point) (1+ (point))
-                                 'syntax-table '(12 . ?!)))
-            (forward-char 1))
-           ;; Any other character: just advance.
-           (t
-            (forward-char 1))))))))
+  (let ((ppss (syntax-ppss start)))
+    (when (nth 4 ppss)
+      (picard--syntax-propertize-noop (nth 8 ppss) end)))
+  (while (and (< (point) end)
+              (re-search-forward "\\$noop(" end t))
+    (picard--syntax-propertize-noop (match-beginning 0) end)))
 
 ;;;; Indentation
 ;; ==========================================================================
