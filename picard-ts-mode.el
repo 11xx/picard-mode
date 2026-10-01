@@ -71,11 +71,10 @@
 ;;; Code:
 
 (require 'treesit)
-;; `picard-mode' may provide shared customisation variables (e.g.
-;; `picard-indent-level').  The require is optional: if the non-ts
-;; variant is not installed, this mode still functions correctly.
-(require 'picard-mode nil 'noerror)
-(require 'picard-core nil 'noerror)
+;; `picard-mode' provides the shared customisation group and
+;; `picard-tab-width'; `picard-core' the shared setup functions.
+(require 'picard-mode)
+(require 'picard-core)
 
 
 ;;;; Grammar Source
@@ -349,16 +348,16 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
 ;;   prev-sibling   ANCHOR: column of the previous sibling's start
 
 (defvar picard-ts-mode--indent-rules
-  `((taggerscript
+  '((taggerscript
 
      ;; Closing parenthesis alignment
      ;; =========================================================================
      ;; When the cursor sits on a `)` that closes a function call, align
-     ;; it with the column of the parent `function_call' node's first
-     ;; character (i.e. the `$').  This produces:
+     ;; it with the indentation of the line holding the call's `$'.  This
+     ;; produces:
      ;;
      ;;   $func(arg1,
-     ;;         arg2
+     ;;   <TAB>arg2
      ;;   )  <- back-aligned with $func
      ;;
      ;; `node-is' matches the current (innermost) node at BOL.
@@ -370,22 +369,26 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
      ;; Argument indentation
      ;; =========================================================================
      ;;   $if(condition,
-     ;;     value_if_true  <- indented one level
-     ;;     value_if_false
+     ;;   <TAB>value_if_true  <- indented one level
+     ;;   <TAB>value_if_false
      ;;   )
      ;;
      ;; `parent-is' matches lines whose syntactic parent is `argument'
      ;; or `function_call'.  Two rules cover both the direct argument
-     ;; node and content nested within it.
-     ((parent-is "argument") parent-bol ,tab-width)
-     ((parent-is "function_call") parent-bol ,tab-width)
+     ;; node and content nested within it.  An argument usually starts
+     ;; right after the `(' or `,' that precedes it, on an earlier line,
+     ;; so the anchor is `standalone-parent': the nearest ancestor that
+     ;; begins its own line, normally the enclosing call.  The offset is
+     ;; the variable `tab-width', read in the buffer at indentation time,
+     ;; so each level adds exactly one tab.
+     ((parent-is "argument") standalone-parent tab-width)
+     ((parent-is "function_call") standalone-parent tab-width)
 
      ;; Noop / comment blocks
      ;; =========================================================================
      ;; Content inside $noop(...) is treated as a comment and receives
-     ;; no additional indentation.  Because noop can contain arbitrary
-     ;; text (including line breaks), aligning its content with the
-     ;; parent start (offset 0) preserves the author's formatting.
+     ;; no additional indentation: it is aligned with the indentation of
+     ;; the line where the $noop starts.
      ((parent-is "noop") parent-bol 0)
 
      ;; Top-level fallback
@@ -396,8 +399,8 @@ Assigned to `treesit-font-lock-feature-list' in the mode setup.")
 
      ;; Empty lines
      ;; ====================================================================
-     ;; When there is no node at BOL (blank line), do not change
-     ;; indentation from whatever the user last set.
+     ;; When there is no node at BOL, align with the indentation of the
+     ;; line where the enclosing node starts.
      (no-node parent-bol 0)))
 
   "Indentation rules for `picard-ts-mode'.
@@ -505,11 +508,11 @@ It must not be called in any other context."
   (setq-local treesit-simple-indent-rules
               picard-ts-mode--indent-rules)
 
-  ;; Use tabs (not spaces) for indentation, with a tab stop of 2 columns.
-  ;; Picard Script is often edited inline in the Picard UI which renders
-  ;; tabs as 2-space indents.
+  ;; Use tabs (not spaces) for indentation, displayed `picard-tab-width'
+  ;; columns wide as in `picard-mode'.  The indentation rules offset each
+  ;; level by `tab-width', so every level is one tab.
   (setq-local indent-tabs-mode t)
-  (setq-local tab-width 2)
+  (setq-local tab-width picard-tab-width)
 
   ;; Defun navigation
   ;; =========================================================================
