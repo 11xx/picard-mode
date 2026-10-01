@@ -42,6 +42,7 @@
 ;; ==========================================================================
 
 (require 'syntax)   ; For syntax-propertize machinery
+(require 'subr-x)   ; For `string-blank-p', which older Emacsen do not autoload
 (require 'picard-core)
 
 ;;;; Customization Group
