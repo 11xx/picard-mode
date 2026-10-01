@@ -73,6 +73,10 @@
 (declare-function treesit-node-end         "treesit" (node))
 (declare-function treesit-node-children    "treesit" (node &optional named))
 
+(declare-function flymake-diagnostics      "flymake" (&optional beg end))
+(declare-function flymake-diagnostic-text  "flymake" (diag))
+(declare-function flymake-diagnostic-type  "flymake" (diag))
+
 ;;;; Signature generation
 
 (defconst picard--generic-arg-names
@@ -380,13 +384,16 @@ the result string is passed to it; otherwise it is returned directly."
           (funcall cb doc-string))
       doc-string)))
 
-(defun picard-eldoc-function (cb &rest _ignored)
-  "Legacy combined Eldoc provider for Picard.
+(defun picard-eldoc-function (&optional cb &rest _ignored)
+  "Combined Eldoc provider for Picard, for `eldoc-documentation-function'.
+
+Emacs versions before 28 call it with no arguments and use the returned
+string.  CB, when non-nil, is passed on as in `picard-eldoc--function-doc'.
 
 Returns function documentation first, then variable documentation if no
 function context is active."
-  (or (apply #'picard-eldoc--function-doc cb _ignored)
-      (apply #'picard-eldoc--variable-doc cb _ignored)))
+  (or (picard-eldoc--function-doc cb)
+      (picard-eldoc--variable-doc cb)))
 
 (defun picard-eldoc-show-all ()
   "Show all Picard docs and Flymake diagnostics available at point.
@@ -399,7 +406,7 @@ Uses a dedicated help buffer so all information is visible at once."
         (variable-doc (picard-eldoc--variable-doc nil))
         (flymake-diags
          (when (and (boundp 'flymake-mode) flymake-mode)
-           (cl-loop for diag in (flymake-diagnostics (point) nil nil)
+           (cl-loop for diag in (flymake-diagnostics (point))
                     for text = (flymake-diagnostic-text diag)
                     when text
                     collect (cons (symbol-name (flymake-diagnostic-type diag))

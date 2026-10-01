@@ -9,6 +9,15 @@
 (require 'cl-lib)
 (require 'picard-data nil 'noerror)
 
+(declare-function picard-flymake-setup "picard-flymake" ())
+(declare-function picard-eldoc-setup "picard-eldoc" ())
+(declare-function picard-completion-setup "picard-completion" ())
+
+;; Both major modes bind this command, so it must be callable before
+;; `picard-eldoc' has been loaded.
+(autoload 'picard-eldoc-show-all "picard-eldoc"
+  "Show all Picard docs and Flymake diagnostics available at point." t)
+
 ;;;; Builtin Variable Highlighting
 ;; ==========================================================================
 
