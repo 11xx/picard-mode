@@ -35,14 +35,15 @@
 ;; Signature formatting
 ;; --------------------
 ;; Functions:
-;;   $if(condition, then[, else]): conditional: If condition is non-empty...
+;;   $if(if, then, [else]): conditional: If the condition IF is non-empty...
 ;;
 ;; Variables:
-;;   %artist%: basic-tag: The primary artist of the recording.
+;;   %artist%: basic-tag: The track artists, joined by their join phrases.
 ;;
-;; Argument names are synthetic: they are generated from the parameter
-;; index and the function's category when no named parameter list is
-;; available.
+;; Argument names come from the `:args' field of `picard-builtin-functions';
+;; positional names (arg1, arg2, ...) stand in when it has none.  A version
+;; note follows entries Picard introduced recently, and deprecated
+;; variables name their replacement.
 ;;
 ;; Tree-sitter path
 ;; ----------------
@@ -93,7 +94,9 @@ non-nil, is the zero-based index of the argument at point; that argument
 will be visually indicated as the current argument.
 
 The format is:
-  $funcname(req1, req2[, opt1]): category: docstring"
+  $funcname(req1, req2, [opt1]): category: docstring (since Picard N)
+
+The version note appears when INFO carries a :since value."
   (let* ((min-args (plist-get info :min-args))
          (max-args (plist-get info :max-args))
          (category (plist-get info :category))
@@ -147,11 +150,17 @@ The format is:
      ;; Pure variadic (min-args = 0, max-args = -1).
      ((= min-args 0)
       (setq args (list "[...]"))))
-    (format "%s(%s): %s: %s"
-            func-name
-            (mapconcat #'identity args ", ")
-            category
-            doc)))
+    (concat (format "%s(%s): %s: %s"
+                    func-name
+                    (mapconcat #'identity args ", ")
+                    category
+                    doc)
+            (picard-eldoc--since-note info))))
+
+(defun picard-eldoc--since-note (info)
+  "Return \" (since Picard N)\" for the :since value in INFO, or \"\"."
+  (let ((since (plist-get info :since)))
+    (if since (format " (since Picard %s)" since) "")))
 
 (defun picard-eldoc--arg-label (func-name index &optional _min-args _max-args)
   "Return a human-readable argument name for FUNC-NAME at zero-based INDEX.
@@ -376,9 +385,11 @@ the result string is passed to it; otherwise it is returned directly."
             (let* ((name (plist-get var-ctx :name))
                    (info (plist-get var-ctx :info))
                    (cat  (if info (plist-get info :category) "unknown"))
-                   (doc  (if info (plist-get info :doc) "User-defined variable.")))
-              (format "%%%s%%: %s: %s"
-                      name cat doc)))))
+                   (doc  (if info (plist-get info :doc) "User-defined variable."))
+                   (deprecated (plist-get info :deprecated)))
+              (concat (format "%%%s%%: %s: %s" name cat doc)
+                      (picard-eldoc--since-note info)
+                      (if deprecated (format " Deprecated: %s" deprecated) ""))))))
     (if cb
         (when doc-string
           (funcall cb doc-string))

@@ -103,14 +103,16 @@ functional category and accepted arity, formatted as:
   "Return an annotation string for the tag or variable name CANDIDATE.
 
 CANDIDATE is a bare string like \"artist\" or \"_filename\".  The
-annotation shows the category:
+annotation shows the category, marked when Picard deprecates the entry:
 
   [basic-tag]
-  [hidden-variable]"
+  [hidden-variable]
+  [hidden-variable, deprecated]"
   (let ((info (picard-tag-info candidate)))
     (if (null info)
         ""
-      (format " [%s]" (plist-get info :category)))))
+      (format " [%s%s]" (plist-get info :category)
+              (if (plist-get info :deprecated) ", deprecated" "")))))
 
 ;;;; Context detection
 
